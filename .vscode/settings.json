@@ -1,0 +1,9 @@
+{
+  "deno.enable": true,
+  "deno.unstable": true,
+  "deno.enablePaths": [
+    "supabase/functions"
+  ],
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+  "git.ignoreLimitWarning": true
+}

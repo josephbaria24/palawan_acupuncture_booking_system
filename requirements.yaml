@@ -1,0 +1,18 @@
+packages:
+  "qrcode.react": "For generating QR codes for booking links"
+  "date-fns": "For formatting dates and times nicely"
+  "framer-motion": "For smooth page transitions and micro-interactions"
+  "uuid": "For generating unique IDs in the local mock database"
+  "lucide-react": "Standard icons"
+
+images:
+  - path: "artifacts/acupuncture-booking/public/images/hero-wellness.png"
+    description: "A very clean, minimalist, high-end medical wellness abstract composition. Soft white background with subtle pale red (#FFA6A6) and soft red (#EB4C4C) floating organic shapes, creating a sense of calm, healing, and modern acupuncture."
+    aspect_ratio: "16:9"
+  - path: "artifacts/acupuncture-booking/public/images/auth-bg.png"
+    description: "Soft elegant abstract pattern in pale red and white, suitable for a sidebar or background accent in a clinical setting."
+    aspect_ratio: "3:4"
+
+notes:
+  - App is 100% frontend using localStorage to persist data to meet the requirement.
+  - Using uuid for mock DB IDs.

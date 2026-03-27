@@ -1,0 +1,100 @@
+﻿
+> @workspace/acupuncture-booking@0.0.0 build
+> vite build --config vite.config.ts
+
+node.exe : Γû▓ [WARNING] 
+Cannot find base config 
+file 
+"../../tsconfig.base.json" 
+[tsconfig.json]
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
+    + CategoryInfo          
+    : NotSpecified: (Γû▓ [  
+  WARNING] C...[tsconfig.   
+ json]:String) [], Remot    
+eException
+    + FullyQualifiedErrorId 
+    : NativeCommandError
+ 
+
+    tsconfig.json:2:13:
+      2 Γöé   "extends": 
+"../../tsconfig.base.json",
+        Γò╡              
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+[36mvite v7.3.1 [32mbuilding client environment for production...[36m[39m
+[32mΓ£ô[39m 0 modules transformed.
+[31mΓ£ù[39m Build failed 
+in 26ms
+[31merror during build:
+[31m[vite:build-html] 
+failed to resolve "extends":
+"../../tsconfig.base.json" 
+in C:\Users\delar\Downloads\
+PETROSPHERE_PROJECT\Acupunct
+ure\acupuncture-booking\tsco
+nfig.json[31m
+file: [36mC:/Users/delar/Do
+wnloads/PETROSPHERE_PROJECT/
+Acupuncture/acupuncture-book
+ing/index.html[31m
+    at resolveExtends (file:
+///C:/Users/delar/Downloads/
+PETROSPHERE_PROJECT/Acupunct
+ure/acupuncture-booking/node
+_modules/vite/dist/node/chun
+ks/config.js:5809:8)
+    at parseExtends (file://
+/C:/Users/delar/Downloads/PE
+TROSPHERE_PROJECT/Acupunctur
+e/acupuncture-booking/node_m
+odules/vite/dist/node/chunks
+/config.js:5775:71)
+    at parse$13 (file:///C:/
+Users/delar/Downloads/PETROS
+PHERE_PROJECT/Acupuncture/ac
+upuncture-booking/node_modul
+es/vite/dist/node/chunks/con
+fig.js:5677:23)
+    at async 
+loadTsconfigJsonForFile (fil
+e:///C:/Users/delar/Download
+s/PETROSPHERE_PROJECT/Acupun
+cture/acupuncture-booking/no
+de_modules/vite/dist/node/ch
+unks/config.js:6286:37)
+    at async 
+transformWithEsbuild (file:/
+//C:/Users/delar/Downloads/P
+ETROSPHERE_PROJECT/Acupunctu
+re/acupuncture-booking/node_
+modules/vite/dist/node/chunk
+s/config.js:6086:55)
+    at async 
+Object.transform (file:///C:
+/Users/delar/Downloads/PETRO
+SPHERE_PROJECT/Acupuncture/a
+cupuncture-booking/node_modu
+les/vite/dist/node/chunks/co
+nfig.js:6172:20)
+    at async transform (file
+:///C:/Users/delar/Downloads
+/PETROSPHERE_PROJECT/Acupunc
+ture/acupuncture-booking/nod
+e_modules/rollup/dist/es/sha
+red/node-entry.js:21316:16)
+    at async ModuleLoader.ad
+dModuleSource (file:///C:/Us
+ers/delar/Downloads/PETROSPH
+ERE_PROJECT/Acupuncture/acup
+uncture-booking/node_modules
+/rollup/dist/es/shared/node-
+entry.js:21544:36)[39m
