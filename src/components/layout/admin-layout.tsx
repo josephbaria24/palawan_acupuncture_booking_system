@@ -1,9 +1,13 @@
+"use client";
+
 import { ReactNode, useState } from "react";
-import { Link, useLocation } from "wouter";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   CalendarDays,
   UserPlus,
+  Users,
   Settings,
   LogOut,
   Activity,
@@ -14,21 +18,22 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 
 const PetroCoreXBranding = () => (
-  <div className="flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-xl text-[10px] font-bold shadow-2xl">
+  <div className="flex items-center justify-center gap-1 py-2.5 px-2 rounded-xl text-[10px] font-bold shadow-2xl">
     <span className="text-slate-400">Developed by</span>
-    <span className="text-slate-900 tracking-tight">PetroCore</span>
+    <span className="text-slate-900">PetroCore</span>
     <span className="text-red-600 font-black">X</span>
   </div>
 );
 
 export function AdminLayout({ children }: { children: ReactNode }) {
-  const [location] = useLocation();
+  const location = usePathname() || "/admin";
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { user, signOut } = useAuth();
 
   const navItems = [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/schedules", label: "Schedules", icon: CalendarDays },
+    { href: "/admin/clients", label: "View Clients", icon: Users },
     { href: "/admin/assign", label: "Assign Client", icon: UserPlus },
   ];
 
@@ -56,11 +61,18 @@ export function AdminLayout({ children }: { children: ReactNode }) {
         ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
       `}>
         <div className="p-6 border-b border-border flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 text-xl font-display font-bold text-foreground group">
-            <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+          <Link href="/" className="flex items-center gap-3 group select-none">
+            <div className="w-10 h-10 rounded-xl overflow-hidden bg-white/40 border border-white/50 flex items-center justify-center shadow-sm transition-transform duration-300 group-hover:scale-105">
               <img src="/images/logo.png" alt="Palawan Acupuncture Logo" className="w-full h-full object-contain" />
             </div>
-            Palawan<span className="text-primary">.</span>
+            <div className="leading-[1.1]">
+              <div className="text-lg font-display font-black tracking-tight text-foreground">
+                Palawan
+              </div>
+              <div className="text-primary font-bold text-[13px] tracking-tight">
+                Acupuncture
+              </div>
+            </div>
           </Link>
           <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-2 text-muted-foreground hover:bg-secondary rounded-lg">
             <X size={20} />
@@ -143,14 +155,27 @@ export function AdminLayout({ children }: { children: ReactNode }) {
                 </div>
               )}
             </button>
-            <Link href="/admin" className="font-display font-bold flex items-center gap-2 text-lg">
-              Palawan<span className="text-primary">.</span>
+            <Link href="/admin" className="flex items-center gap-2 group select-none">
+              <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center bg-white/40 border border-white/50">
+                <img src="/images/logo.png" alt="Palawan Acupuncture Logo" className="w-full h-full object-contain" />
+              </div>
+              <div className="leading-[1.1]">
+                <div className="text-sm font-display font-black tracking-tight text-foreground">
+                  Palawan
+                </div>
+                <div className="text-primary font-bold text-[11px] tracking-tight">
+                  Acupuncture
+                </div>
+              </div>
             </Link>
           </div>
 
           <div className="flex gap-1">
             <Link href="/admin/schedules" className="p-2 text-muted-foreground hover:bg-secondary rounded-lg transition-colors">
               <CalendarDays size={18} />
+            </Link>
+            <Link href="/admin/clients" className="p-2 text-muted-foreground hover:bg-secondary rounded-lg transition-colors">
+              <Users size={18} />
             </Link>
             <Link href="/admin/assign" className="p-2 text-muted-foreground hover:bg-secondary rounded-lg transition-colors">
               <UserPlus size={18} />

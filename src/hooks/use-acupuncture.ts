@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
-import { Schedule, Booking, BookingStatus } from "../types/database";
+import { Schedule, ScheduleWithBookings, Booking, BookingStatus } from "../types/database";
 
 // --- Schedules Hooks ---
 export function useSchedules() {
@@ -9,12 +9,12 @@ export function useSchedules() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('schedules')
-        .select('*')
+        .select('*, bookings(id, status)')
         .order('date', { ascending: true })
         .order('start_time', { ascending: true });
       
       if (error) throw error;
-      return data as Schedule[];
+      return data as ScheduleWithBookings[];
     }
   });
 }
@@ -25,12 +25,12 @@ export function useSchedule(id: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('schedules')
-        .select('*')
+        .select('*, bookings(id, status)')
         .eq('id', id)
         .single();
       
       if (error) throw error;
-      return data as Schedule;
+      return data as ScheduleWithBookings;
     },
     enabled: !!id
   });
@@ -149,10 +149,23 @@ export function useCreateBooking() {
       if (error) throw error;
       return newBooking as Booking;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (booking) => {
+      // Fetch schedule for the email details
+      const schedule = queryClient.getQueryData<ScheduleWithBookings[]>(['schedules'])?.find(s => s.id === booking.schedule_id);
+
+      // Trigger Email Notification (non-blocking)
+      fetch('/api/bookings/email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          booking, 
+          schedule 
+        }),
+      }).catch(err => console.error("Email trigger failed:", err));
+
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       queryClient.invalidateQueries({ queryKey: ['schedules'] });
-      queryClient.invalidateQueries({ queryKey: ['schedule', variables.schedule_id] });
+      queryClient.invalidateQueries({ queryKey: ['schedule', booking.schedule_id] });
     }
   });
 }
@@ -174,6 +187,46 @@ export function useUpdateBookingStatus() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] });
       queryClient.invalidateQueries({ queryKey: ['schedules'] });
+    }
+  });
+}
+
+export function useBookingByReference(referenceCode: string) {
+  return useQuery({
+    queryKey: ['booking', 'reference', referenceCode],
+    queryFn: async () => {
+      if (!referenceCode) return null;
+      
+      const { data, error } = await supabase
+        .from('bookings')
+        .select(`
+          *,
+          schedules (*)
+        `)
+        .eq('reference_code', referenceCode.trim().toUpperCase())
+        .maybeSingle();
+      
+      if (error) throw error;
+      return data as (Booking & { schedules: Schedule });
+    },
+    enabled: !!referenceCode && referenceCode.length >= 6
+  });
+}
+
+export function useAllBookings() {
+  return useQuery({
+    queryKey: ['bookings', 'all'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('bookings')
+        .select(`
+          *,
+          schedules (*)
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as (Booking & { schedules: Schedule })[];
     }
   });
 }

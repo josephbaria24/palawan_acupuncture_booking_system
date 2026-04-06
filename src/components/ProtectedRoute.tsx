@@ -1,10 +1,15 @@
-import { ReactNode } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { Redirect } from 'wouter';
-import { motion } from 'framer-motion';
+import { ReactNode, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import { motion } from "framer-motion";
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) router.push("/admin/login");
+  }, [loading, user, router]);
 
   if (loading) {
     return (
@@ -29,7 +34,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   }
 
   if (!user) {
-    return <Redirect to="/admin/login" />;
+    return null;
   }
 
   return <>{children}</>;

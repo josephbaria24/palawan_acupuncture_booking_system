@@ -168,7 +168,7 @@ class MockDatabase {
     if (!schedule) throw new Error('Schedule not found');
 
     let status = data.status;
-    let queuePosition = undefined;
+    let queuePosition: number | undefined = undefined;
 
     // Auto-queue logic if full
     if (scheduleBookings.length >= schedule.capacity && status === 'confirmed') {

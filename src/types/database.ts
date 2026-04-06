@@ -33,3 +33,7 @@ export interface Booking {
   reference_code: string;
   created_at: string;
 }
+
+export interface ScheduleWithBookings extends Schedule {
+  bookings?: { id: string; status: BookingStatus }[];
+}
