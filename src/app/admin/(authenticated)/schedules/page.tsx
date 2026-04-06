@@ -114,7 +114,7 @@ export default function AdminSchedules() {
               <Plus size={18} className="mr-2" /> New Schedule
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] rounded-3xl p-6">
+          <DialogContent className="w-[95vw] sm:max-w-[425px] rounded-3xl p-6 max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold">Add New Schedule</DialogTitle>
             </DialogHeader>
@@ -150,14 +150,15 @@ export default function AdminSchedules() {
                       )}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0 rounded-3xl" align="start">
+                  <PopoverContent className="w-auto p-0 rounded-3xl shadow-2xl border-primary/10" align="center" side="bottom">
                     <Calendar
                       initialFocus
                       mode="range"
                       defaultMonth={dateRange?.from}
                       selected={dateRange}
                       onSelect={setDateRange}
-                      numberOfMonths={2}
+                      numberOfMonths={1}
+                      className="p-3"
                     />
                   </PopoverContent>
                 </Popover>
