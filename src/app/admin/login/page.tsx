@@ -4,12 +4,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { 
-  Mail, 
-  Lock, 
-  ShieldCheck, 
+import {
+  Mail,
+  Lock,
+  ShieldCheck,
   ChevronRight,
-  ArrowLeft
+  ArrowLeft,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,10 +22,11 @@ import Link from "next/link";
 export default function AdminLogin() {
   const router = useRouter();
   const { signIn } = useAuth();
-  
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +57,7 @@ export default function AdminLogin() {
         <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
         <span className="text-sm font-semibold">Back to Home</span>
       </Link>
-      
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -74,9 +77,9 @@ export default function AdminLogin() {
               <div className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Email Address</label>
                 <div className="relative">
-                  <Input 
+                  <Input
                     type="email"
-                    placeholder="admin@palawanacupuncture.com" 
+                    placeholder="admin@palawanacupuncture.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="h-12 pl-10 rounded-xl bg-muted/30 border-transparent focus:bg-background focus:ring-primary/20 transition-all font-medium"
@@ -91,20 +94,27 @@ export default function AdminLogin() {
                   <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Password</label>
                 </div>
                 <div className="relative">
-                  <Input 
-                    type="password"
-                    placeholder="••••••••" 
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="h-12 pl-10 rounded-xl bg-muted/30 border-transparent focus:bg-background focus:ring-primary/20 transition-all font-medium"
+                    className="h-12 pl-10 pr-10 rounded-xl bg-muted/30 border-transparent focus:bg-background focus:ring-primary/20 transition-all font-medium"
                     required
                   />
                   <Lock size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/40" />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground/40 hover:text-primary transition-colors outline-none"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
                 </div>
               </div>
 
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="w-full h-12 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all mt-4 flex items-center justify-center gap-2"
                 disabled={isLoading}
               >
@@ -115,9 +125,9 @@ export default function AdminLogin() {
 
             <div className="mt-8 pt-6 border-t border-border/50 text-center">
               <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-2">Powered by</p>
-              <div className="flex items-center justify-center gap-2 grayscale hover:grayscale-0 transition-all duration-500 opacity-60 hover:opacity-100">
-                 <span className="text-slate-900 font-bold tracking-tight text-xs">PetroCore</span>
-                 <span className="text-red-600 font-black text-xs">X</span>
+              <div className="flex items-center justify-center gap-0 grayscale hover:grayscale-0 transition-all duration-500 opacity-60 hover:opacity-100">
+                <span className="text-slate-900 font-bold text-xs">PetroCore</span>
+                <span className="text-red-600 font-black text-xs">X</span>
               </div>
             </div>
           </CardContent>

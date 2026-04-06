@@ -18,7 +18,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 
 const PetroCoreXBranding = () => (
-  <div className="flex items-center justify-center gap-1 py-2.5 px-2 rounded-xl text-[10px] font-bold shadow-2xl">
+  <div className="flex items-center justify-center gap-0 py-2.5 px-2 rounded-xl text-[10px] font-bold shadow-2xl">
     <span className="text-slate-400">Developed by</span>
     <span className="text-slate-900">PetroCore</span>
     <span className="text-red-600 font-black">X</span>

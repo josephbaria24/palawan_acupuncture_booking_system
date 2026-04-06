@@ -290,7 +290,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             <div className="flex items-center gap-3 backdrop-blur-sm bg-white/40 py-2 px-4 rounded-2xl border border-white/60 shadow-sm">
               <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">Developed by</span>
               <div className="flex items-center gap-1 group">
-                <span className="text-xs font-black text-slate-800 tracking-tighter transition-colors group-hover:text-primary">PetroCore</span>
+                <span className="text-xs font-black text-slate-800  transition-colors group-hover:text-primary">PetroCore</span>
                 <span className="text-xs font-black text-red-600 transition-transform group-hover:scale-125">X</span>
               </div>
             </div>
