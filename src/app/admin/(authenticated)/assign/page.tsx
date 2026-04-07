@@ -1,6 +1,6 @@
 "use client";
 
-import { useSchedules, useCreateBooking } from "@/hooks/use-acupuncture";
+import { useSchedules, useCreateBooking, useAllBookings } from "@/hooks/use-acupuncture";
 import { 
   UserPlus, 
   Calendar, 
@@ -11,9 +11,10 @@ import {
   ArrowRight,
   Wallet,
   Search,
-  CheckCircle2
+  CheckCircle2,
+  X
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +30,10 @@ import { cn } from "@/lib/utils";
 export default function AdminAssignClient() {
   const router = useRouter();
   const { data: schedules, isLoading: isSchedulesLoading } = useSchedules();
+  const { data: allBookings } = useAllBookings();
   const createBooking = useCreateBooking();
+  
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const [formData, setFormData] = useState({
     client_name: "",
@@ -40,6 +44,41 @@ export default function AdminAssignClient() {
   });
 
   const [slotSearch, setSlotSearch] = useState("");
+
+  const uniqueClients = useMemo(() => {
+    if (!allBookings) return [];
+    const clientsMap = new Map();
+    allBookings.forEach(b => {
+      const key = `${b.client_name.toLowerCase()}-${b.email.toLowerCase()}`;
+      if (!clientsMap.has(key)) {
+        clientsMap.set(key, {
+          name: b.client_name,
+          phone: b.phone,
+          email: b.email
+        });
+      }
+    });
+    return Array.from(clientsMap.values());
+  }, [allBookings]);
+
+  const suggestions = useMemo(() => {
+    if (!formData.client_name || !showSuggestions) return [];
+    const query = formData.client_name.toLowerCase();
+    return uniqueClients.filter(c => 
+      c.name.toLowerCase().includes(query) || 
+      c.email.toLowerCase().includes(query)
+    ).slice(0, 5); // Limit to top 5 suggestions
+  }, [uniqueClients, formData.client_name, showSuggestions]);
+
+  const handleSelectClient = (client: any) => {
+    setFormData({
+      ...formData,
+      client_name: client.name,
+      phone: client.phone,
+      email: client.email
+    });
+    setShowSuggestions(false);
+  };
 
   const handleAssign = async () => {
     if (!formData.client_name || !formData.schedule_id) {
@@ -81,17 +120,65 @@ export default function AdminAssignClient() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 relative">
                 <label className="text-xs font-bold text-muted-foreground uppercase">Client Name</label>
                 <div className="relative">
                   <Input 
                     placeholder="Full Name" 
                     value={formData.client_name}
-                    onChange={(e) => setFormData({...formData, client_name: e.target.value})}
+                    onChange={(e) => {
+                      setFormData({...formData, client_name: e.target.value});
+                      setShowSuggestions(true);
+                    }}
+                    onFocus={() => setShowSuggestions(true)}
                     className="pl-9"
                   />
                   <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50" />
+                  
+                  {formData.client_name && (
+                    <button 
+                      onClick={() => {
+                        setFormData({...formData, client_name: "", phone: "", email: ""});
+                        setShowSuggestions(false);
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 transition-colors"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
                 </div>
+
+                {/* Suggestions Dropdown */}
+                <AnimatePresence>
+                  {suggestions.length > 0 && (
+                    <motion.div 
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute left-0 right-0 top-full mt-2 bg-white border border-border shadow-xl rounded-2xl z-50 overflow-hidden"
+                    >
+                      <div className="p-1">
+                        <p className="text-[10px] font-bold text-muted-foreground p-2 uppercase tracking-widest">Existing Patients Found</p>
+                        {suggestions.map((client, idx) => (
+                          <button
+                            key={`${client.email}-${idx}`}
+                            onClick={() => handleSelectClient(client)}
+                            className="w-full text-left p-3 rounded-xl hover:bg-secondary/20 transition-all flex items-center justify-between group"
+                          >
+                            <div className="flex flex-col gap-0.5">
+                              <span className="text-sm font-bold text-foreground group-hover:text-primary transition-colors">{client.name}</span>
+                              <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                                <span className="flex items-center gap-1 font-medium"><Phone size={10} /> {client.phone}</span>
+                                <span className="flex items-center gap-1 font-medium"><Mail size={10} /> {client.email}</span>
+                              </div>
+                            </div>
+                            <CheckCircle2 size={16} className="text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </button>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

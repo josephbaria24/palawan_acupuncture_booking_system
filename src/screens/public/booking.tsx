@@ -11,7 +11,9 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  CreditCard
+  CreditCard,
+  Download,
+  Share2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { formatTime12h } from "@/utils/time";
+import { downloadIcsFile, generateGoogleCalendarUrl } from "@/utils/calendar";
 import { useState } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -44,6 +47,7 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
 
   const [isSuccess, setIsSuccess] = useState(false);
   const [bookingRef, setBookingRef] = useState("");
+  const [bookingStatus, setBookingStatus] = useState<string>("confirmed");
 
   const handleBook = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,6 +63,11 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
       const confirmedCount = schedule?.bookings?.filter(b => b.status === "confirmed").length || 0;
       const isFull = schedule?.status === 'full' || confirmedCount >= (schedule?.capacity || 0);
 
+      if (isFull && !schedule?.queue_enabled) {
+        toast.error("This session is full and the waitlist is currently disabled.");
+        return;
+      }
+
       const result = await createBooking.mutateAsync({
         client_name: formData.client_name,
         phone: formData.phone,
@@ -70,8 +79,9 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
       });
       
       setBookingRef(result.reference_code);
+      setBookingStatus(result.status);
       setIsSuccess(true);
-      toast.success("Booking submitted successfully!");
+      toast.success(result.status === 'queued' ? "Added to waitlist!" : "Booking submitted successfully!");
     } catch (error) {
       console.error("Booking error:", error);
       toast.error("Failed to submit booking. Please try again.");
@@ -112,13 +122,29 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
             animate={{ opacity: 1, scale: 1 }}
             className="glass-card rounded-[2.5rem] p-8 md:p-12 text-center border-primary/20 shadow-2xl shadow-primary/10"
           >
-            <div className="w-20 h-20 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle2 className="w-10 h-10 text-primary" />
+            <div className={`w-20 h-20 ${bookingStatus === 'queued' ? 'bg-amber-500/20' : 'bg-primary/20'} rounded-full flex items-center justify-center mx-auto mb-6`}>
+              {bookingStatus === 'queued' ? (
+                <Clock className="w-10 h-10 text-amber-600" />
+              ) : (
+                <CheckCircle2 className="w-10 h-10 text-primary" />
+              )}
             </div>
-            <h1 className="text-3xl font-display font-black mb-4">Booking Confirmed!</h1>
+            <h1 className="text-3xl font-display font-black mb-4">
+              {bookingStatus === 'queued' ? "Waitlist Joined!" : "Booking Confirmed!"}
+            </h1>
             <p className="text-muted-foreground mb-8">
-              Thank you, <span className="font-bold text-foreground">{formData.client_name}</span>. 
-              Your session for {format(new Date(schedule.date), 'MMMM dd')} at {formatTime12h(schedule.start_time)} is all set.
+              {bookingStatus === 'queued' ? (
+                <>
+                  Thank you, <span className="font-bold text-foreground">{formData.client_name}</span>. 
+                  You've been added to the waitlist for {format(new Date(schedule.date), 'MMMM dd, yyyy')}. 
+                  We will notify you immediately if a spot becomes available and your booking is confirmed.
+                </>
+              ) : (
+                <>
+                  Thank you, <span className="font-bold text-foreground">{formData.client_name}</span>. 
+                  Your session for {format(new Date(schedule.date), 'MMMM dd')} at {formatTime12h(schedule.start_time)} is all set.
+                </>
+              )}
             </p>
             
             <div className="bg-secondary/30 rounded-2xl p-6 mb-8 border border-secondary/50">
@@ -126,6 +152,67 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
               <p className="text-3xl font-display font-black text-primary tracking-tighter">{bookingRef}</p>
               <p className="text-xs text-muted-foreground mt-4">Please save this code for tracking your appointment.</p>
             </div>
+
+            {bookingStatus === 'confirmed' && (
+              <div className="mb-8 space-y-3">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Add to your calendar</p>
+                <div className="flex flex-wrap justify-center gap-3">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="rounded-xl h-11 px-6 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all font-bold text-xs flex items-center gap-2"
+                    onClick={() => {
+                        const date = new Date(schedule.date);
+                        const [sh, sm] = (schedule.start_time || "08:00").split(':');
+                        const [eh, em] = (schedule.end_time || "08:30").split(':');
+                        
+                        const start = new Date(date);
+                        start.setHours(parseInt(sh), parseInt(sm), 0, 0);
+                        
+                        const end = new Date(date);
+                        end.setHours(parseInt(eh), parseInt(em), 0, 0);
+
+                      const googleUrl = generateGoogleCalendarUrl({
+                        title: `Acupuncture Session: ${schedule.title}`,
+                        description: `Your acupuncture appointment (Ref: ${bookingRef}). Please arrive 15 minutes before your slot.`,
+                        location: "Palawan Clinic",
+                        startTime: start.toISOString(),
+                        endTime: end.toISOString()
+                      });
+                      window.open(googleUrl, '_blank');
+                    }}
+                  >
+                    <Share2 size={16} /> Google Calendar
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="rounded-xl h-11 px-6 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all font-bold text-xs flex items-center gap-2"
+                    onClick={() => {
+                        const date = new Date(schedule.date);
+                        const [sh, sm] = (schedule.start_time || "08:00").split(':');
+                        const [eh, em] = (schedule.end_time || "08:30").split(':');
+                        
+                        const start = new Date(date);
+                        start.setHours(parseInt(sh), parseInt(sm), 0, 0);
+                        
+                        const end = new Date(date);
+                        end.setHours(parseInt(eh), parseInt(em), 0, 0);
+
+                      downloadIcsFile({
+                        title: `Acupuncture Session: ${schedule.title}`,
+                        description: `Your acupuncture appointment (Ref: ${bookingRef}). Please arrive 15 minutes before your slot.`,
+                        location: "Palawan Clinic",
+                        startTime: start.toISOString(),
+                        endTime: end.toISOString()
+                      });
+                    }}
+                  >
+                    <Download size={16} /> Device Calendar (.ics)
+                  </Button>
+                </div>
+              </div>
+            )}
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button asChild className="rounded-xl px-8">
@@ -230,6 +317,7 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
                         </SelectTrigger>
                         <SelectContent className="rounded-xl border-border/50">
                           <SelectItem value="cash" className="rounded-lg py-2">Cash (On-site)</SelectItem>
+                          <SelectItem value="card" className="rounded-lg py-2">Credit/Debit Card</SelectItem>
                           <SelectItem value="gcash" className="rounded-lg py-2">GCash</SelectItem>
                           <SelectItem value="bank" className="rounded-lg py-2">Bank Transfer</SelectItem>
                         </SelectContent>
@@ -295,11 +383,14 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
                       <Clock size={18} />
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Time Slot</p>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Session Duration</p>
                       <p className="font-bold text-foreground">
                         {formatTime12h(schedule.start_time)} - {formatTime12h(schedule.end_time)}
                       </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">({schedule.slot_duration} minutes session)</p>
+                      <div className="mt-1 flex flex-col gap-0.5">
+                        <span className="text-xs font-medium text-foreground">45 minutes total</span>
+                        <span className="text-[10px] text-muted-foreground font-medium">30m treatment • 15m assessment</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -312,7 +403,7 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
                   <p className="text-[10px] text-right text-muted-foreground">
                     {formData.payment_method === 'cash' 
                       ? 'Payment will be settled on-site.' 
-                      : `Payment via ${formData.payment_method === 'gcash' ? 'GCash' : 'Bank Transfer'}. Instructions will be emailed.`}
+                      : `Payment via ${formData.payment_method === 'card' ? 'Credit/Debit Card' : formData.payment_method === 'gcash' ? 'GCash' : 'Bank Transfer'}. Instructions will be emailed.`}
                   </p>
                 </div>
 

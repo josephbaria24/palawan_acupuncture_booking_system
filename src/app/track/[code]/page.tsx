@@ -6,6 +6,10 @@ import { PublicLayout } from "@/components/layout/public-layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { formatTime12h } from "@/utils/time";
+import { downloadIcsFile, generateGoogleCalendarUrl } from "@/utils/calendar";
+import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import { 
   Calendar, 
   Clock, 
@@ -18,10 +22,10 @@ import {
   Leaf,
   ChevronRight,
   ShieldCheck,
-  Search
+  Search,
+  Download,
+  Share2
 } from "lucide-react";
-import { formatTime12h } from "@/utils/time";
-import { motion, AnimatePresence } from "framer-motion";
 
 export default function TrackResultPage() {
   const params = useParams();
@@ -84,6 +88,8 @@ export default function TrackResultPage() {
     { label: "Confirmed", completed: isConfirmed, active: isConfirmed, icon: <ShieldCheck size={16} /> },
   ];
 
+  const maskedName = booking.client_name;
+
   return (
     <PublicLayout>
       <div className="max-w-3xl mx-auto px-4 py-8 md:py-16 space-y-8 md:space-y-12">
@@ -95,7 +101,7 @@ export default function TrackResultPage() {
               <ShieldCheck size={14} /> Tracking Details
             </div>
             <h1 className="text-3xl md:text-5xl font-display font-black tracking-tighter">
-              Session for {booking.client_name}
+              Session for {maskedName}
             </h1>
           </div>
           <Button 
@@ -153,7 +159,7 @@ export default function TrackResultPage() {
                 </h2>
                 <p className="text-sm text-muted-foreground font-medium leading-relaxed max-w-sm">
                   {isConfirmed ? "Grateful to have you! Your appointment is locked and ready. See you at the clinic soon." : 
-                   isQueued ? "You are on the waitlist. We'll notify you immediately if a slot opens up earlier." : 
+                   isQueued ? "You are on the waitlist. We will notify you immediately if a spot becomes available and your booking is confirmed." : 
                    "This session was cancelled. Please contact us for more information."}
                 </p>
               </div>
@@ -193,7 +199,7 @@ export default function TrackResultPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border/20">
+              <div className="grid grid-cols-2 gap-4 py-4 border-y border-border/20">
                 <div className="space-y-1">
                   <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 align-middle">
                     <Clock size={10} /> Schedule
@@ -209,6 +215,68 @@ export default function TrackResultPage() {
                   <p className="font-bold text-sm">Palawan Clinic</p>
                 </div>
               </div>
+
+              {isConfirmed && (
+                <div className="space-y-3 pt-2">
+                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Set Appointment Reminder</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="flex-1 rounded-xl h-10 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all font-bold text-[10px] flex items-center gap-2"
+                      onClick={() => {
+                        const date = new Date(schedule.date);
+                        const [sh, sm] = (schedule.start_time || "08:00").split(':');
+                        const [eh, em] = (schedule.end_time || "08:30").split(':');
+                        
+                        const start = new Date(date);
+                        start.setHours(parseInt(sh), parseInt(sm), 0, 0);
+                        
+                        const end = new Date(date);
+                        end.setHours(parseInt(eh), parseInt(em), 0, 0);
+
+                        const googleUrl = generateGoogleCalendarUrl({
+                          title: `Acupuncture Session: ${schedule.title}`,
+                          description: `Your acupuncture appointment (Ref: ${code}). Please arrive 15 minutes before your slot.`,
+                          location: "Palawan Clinic",
+                          startTime: start.toISOString(),
+                          endTime: end.toISOString()
+                        });
+                        window.open(googleUrl, '_blank');
+                      }}
+                    >
+                      <Share2 size={14} /> Google
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="flex-1 rounded-xl h-10 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all font-bold text-[10px] flex items-center gap-2"
+                      onClick={() => {
+                        const date = new Date(schedule.date);
+                        const [sh, sm] = (schedule.start_time || "08:00").split(':');
+                        const [eh, em] = (schedule.end_time || "08:30").split(':');
+                        
+                        const start = new Date(date);
+                        start.setHours(parseInt(sh), parseInt(sm), 0, 0);
+                        
+                        const end = new Date(date);
+                        end.setHours(parseInt(eh), parseInt(em), 0, 0);
+
+                        downloadIcsFile({
+                          title: `Acupuncture Session: ${schedule.title}`,
+                          description: `Your acupuncture appointment (Ref: ${code}). Please arrive 15 minutes before your slot.`,
+                          location: "Palawan Clinic",
+                          startTime: start.toISOString(),
+                          endTime: end.toISOString()
+                        });
+                        toast.success("Calendar dynamic event file downloaded!");
+                      }}
+                    >
+                      <Download size={14} /> iCal / Outlook
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
 
@@ -229,7 +297,7 @@ export default function TrackResultPage() {
             <div className="space-y-4">
               <div className="p-4 rounded-2xl bg-white/45 border border-white/60">
                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Full name</p>
-                <p className="font-bold text-base">{booking.client_name}</p>
+                <p className="font-bold text-base">{maskedName}</p>
               </div>
               <div className="p-4 rounded-2xl bg-white/45 border border-white/60">
                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Clinic Policy</p>

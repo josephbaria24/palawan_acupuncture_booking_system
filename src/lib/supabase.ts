@@ -12,3 +12,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     schema: "acupuncture_system",
   },
 });
+
+// Admin client for backend operations (e.g., encryption/decryption)
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+export const supabaseAdmin = supabaseServiceRoleKey 
+  ? createClient(supabaseUrl, supabaseServiceRoleKey, {
+      db: { schema: "acupuncture_system" },
+    })
+  : null;

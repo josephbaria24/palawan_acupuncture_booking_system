@@ -117,17 +117,25 @@ export function useBookings(scheduleId?: string) {
   return useQuery({
     queryKey: ['bookings', scheduleId],
     queryFn: async () => {
-      let query = supabase
-        .from('bookings')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // Fetch user session to get the token for Authorization header
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (scheduleId) {
-        query = query.eq('schedule_id', scheduleId);
+      const url = scheduleId 
+        ? `/api/admin/bookings?scheduleId=${scheduleId}`
+        : '/api/admin/bookings';
+
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': session ? `Bearer ${session.access_token}` : '',
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch bookings");
       }
-      
-      const { data, error } = await query;
-      if (error) throw error;
+
+      const data = await response.json();
       return data as Booking[];
     }
   });
@@ -137,21 +145,25 @@ export function useCreateBooking() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: Omit<Booking, 'id' | 'created_at' | 'queue_position' | 'reference_code'>) => {
-      // Generate unique reference code: PA-XXXXXX
-      const ref = `PA-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      // Now using the secure backend API for encryption and creation
+      const response = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to submit booking");
+      }
       
-      const { data: newBooking, error } = await supabase
-        .from('bookings')
-        .insert([{ ...data, reference_code: ref }])
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return newBooking as Booking;
+      return response.json() as Promise<Booking>;
     },
     onSuccess: async (booking) => {
-      // Fetch schedule for the email details
-      const schedule = queryClient.getQueryData<ScheduleWithBookings[]>(['schedules'])?.find(s => s.id === booking.schedule_id);
+      // Fetch schedule for the email details (check both schedules and individual schedule cache)
+      const schedules = queryClient.getQueryData<ScheduleWithBookings[]>(['schedules']);
+      const schedule = schedules?.find(s => s.id === booking.schedule_id) || 
+                       queryClient.getQueryData<ScheduleWithBookings>(['schedule', booking.schedule_id]);
 
       // Trigger Email Notification (non-blocking)
       fetch('/api/bookings/email', {
@@ -159,7 +171,8 @@ export function useCreateBooking() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           booking, 
-          schedule 
+          schedule,
+          type: booking.status === 'queued' ? 'waitlist' : 'confirmation'
         }),
       }).catch(err => console.error("Email trigger failed:", err));
 
@@ -197,17 +210,15 @@ export function useBookingByReference(referenceCode: string) {
     queryFn: async () => {
       if (!referenceCode) return null;
       
-      const { data, error } = await supabase
-        .from('bookings')
-        .select(`
-          *,
-          schedules (*)
-        `)
-        .eq('reference_code', referenceCode.trim().toUpperCase())
-        .maybeSingle();
+      // Use the secure tracking API which handles decryption and masking on the server
+      const response = await fetch(`/api/bookings/track/${referenceCode.trim().toUpperCase()}`);
       
-      if (error) throw error;
-      return data as (Booking & { schedules: Schedule });
+      if (!response.ok) {
+        if (response.status === 404) return null;
+        throw new Error("Failed to fetch tracking details");
+      }
+      
+      return response.json() as Promise<(Booking & { schedules: Schedule })>;
     },
     enabled: !!referenceCode && referenceCode.length >= 6
   });
@@ -217,16 +228,21 @@ export function useAllBookings() {
   return useQuery({
     queryKey: ['bookings', 'all'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('bookings')
-        .select(`
-          *,
-          schedules (*)
-        `)
-        .order('created_at', { ascending: false });
+      // Fetch user session to get the token for Authorization header
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (error) throw error;
-      return data as (Booking & { schedules: Schedule })[];
+      const response = await fetch('/api/admin/bookings', {
+        headers: {
+          'Authorization': session ? `Bearer ${session.access_token}` : '',
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch admin bookings");
+      }
+
+      return response.json() as Promise<(Booking & { schedules: Schedule })[]>;
     }
   });
 }

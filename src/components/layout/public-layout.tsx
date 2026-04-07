@@ -3,7 +3,7 @@
 import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ArrowRight, Menu, X, Instagram, Facebook, Phone, Clock } from "lucide-react";
+import { ArrowRight, Menu, X, Instagram, Facebook, Phone, Clock, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 
 type NavItem = { label: string; href: string };
@@ -212,7 +212,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
         <div className="absolute inset-0 bg-primary/[0.02] pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
             {/* Branding & Contact */}
             <div className="space-y-6">
               <Link href="/" className="flex items-center gap-3">
@@ -278,6 +278,18 @@ export function PublicLayout({ children }: { children: ReactNode }) {
               </div>
               <p className="text-[11px] text-muted-foreground font-medium">
                 Follow us for health tips and clinic updates.
+              </p>
+            </div>
+
+            {/* Location */}
+            <div className="space-y-6 text-left">
+              <h4 className="text-xs font-black uppercase tracking-widest text-foreground flex items-center gap-2">
+                <MapPin size={14} className="text-primary" />
+                Located At
+              </h4>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Bgy. Tagburos, Puerto Princesa City,<br />
+                Palawan, Philippines, 5300
               </p>
             </div>
           </div>

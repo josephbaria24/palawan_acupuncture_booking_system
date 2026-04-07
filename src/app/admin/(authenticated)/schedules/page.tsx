@@ -14,6 +14,8 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 import { formatTime12h } from "@/utils/time";
 
@@ -30,12 +32,12 @@ export default function AdminSchedules() {
   const [newSlot, setNewSlot] = useState({
     title: "Morning Session",
     start_time: '08:00',
-    end_time: '08:30',
-    slot_duration: 30,
+    end_time: '08:45',
+    slot_duration: 45,
     capacity: 10,
     queue_enabled: true,
     price: 1500,
-    payment_options: ['cash', 'gcash', 'bank'] as any[],
+    payment_options: ['cash', 'card', 'gcash', 'bank'] as any[],
     notes: ""
   });
 
@@ -185,6 +187,19 @@ export default function AdminSchedules() {
                   <Input type="number" value={newSlot.price} onChange={(e) => setNewSlot({...newSlot, price: parseInt(e.target.value)})} className="rounded-xl bg-secondary/5" />
                 </div>
               </div>
+              
+              <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/5 border border-border/40">
+                <div className="space-y-0.5">
+                  <Label htmlFor="waitlist-toggle" className="text-sm font-bold">Enable Waitlist</Label>
+                  <p className="text-[10px] text-muted-foreground font-medium">Allow patients to join the queue if the session is full.</p>
+                </div>
+                <Switch 
+                  id="waitlist-toggle" 
+                  checked={newSlot.queue_enabled} 
+                  onCheckedChange={(checked) => setNewSlot({...newSlot, queue_enabled: checked})} 
+                />
+              </div>
+              
               <Button onClick={handleAddSlot} disabled={createSchedule.isPending} className="w-full mt-2 font-bold rounded-xl py-6 bg-primary hover:bg-primary/90 text-primary-foreground">
                 {createSchedule.isPending ? "Creating sessions..." : `Save ${dateRange?.to ? 'Batch' : 'Schedule'}`}
               </Button>

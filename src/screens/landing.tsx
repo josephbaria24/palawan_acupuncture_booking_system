@@ -240,12 +240,12 @@ export default function LandingScreen() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-            <div className="relative">
-              <div className="rounded-[2rem] overflow-hidden border border-border/70 shadow-2xl shadow-primary/10 bg-background">
+            <div className="relative h-fit self-center">
+              <div className="h-fit rounded-[2rem] overflow-hidden border border-border/70 shadow-2xl shadow-primary/10">
                 <img
-                  src={`/images/${benefits[1]?.image ?? "man.png"}`}
-                  alt="Expert care"
-                  className="w-full h-full object-cover"
+                  src="/images/feelsgood.png"
+                  alt="Expert acupuncture care"
+                  className="w-full h-auto block"
                 />
               </div>
 

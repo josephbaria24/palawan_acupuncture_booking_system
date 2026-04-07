@@ -34,7 +34,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    return () => subscription.unsubscribe();
+    // HIPAA Safeguard: Inactivity auto-logout (15 minutes)
+    let idleTimer: NodeJS.Timeout;
+    const resetTimer = () => {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        console.log("Inactivity detected. Signing out for clinical security.");
+        signOut();
+      }, 15 * 60 * 1000); // 15 minutes
+    };
+
+    const events = ['mousedown', 'keydown', 'touchstart', 'scroll'];
+    if (typeof window !== 'undefined') {
+      events.forEach(event => window.addEventListener(event, resetTimer));
+      resetTimer();
+    }
+
+    return () => {
+      subscription.unsubscribe();
+      if (typeof window !== 'undefined') {
+        events.forEach(event => window.removeEventListener(event, resetTimer));
+      }
+      clearTimeout(idleTimer);
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {

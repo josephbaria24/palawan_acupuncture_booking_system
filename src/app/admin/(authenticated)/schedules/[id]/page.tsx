@@ -1,8 +1,9 @@
 "use client";
 
-import { useSchedule, useBookings, useDeleteSchedule, useUpdateBookingStatus } from "@/hooks/use-acupuncture";
+import { useSchedule, useBookings, useDeleteSchedule, useUpdateBookingStatus, useUpdateSchedule } from "@/hooks/use-acupuncture";
+import { useAuditLog } from "@/hooks/use-audit";
 import { format } from "date-fns";
-import { ArrowLeft, X, UserPlus, HelpCircle } from "lucide-react";
+import { ArrowLeft, X, UserPlus, HelpCircle, Loader2, Calendar as CalendarIcon, Download, Share2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,9 @@ import { useEffect, useState, useRef } from "react";
 import QRCode from "react-qr-code";
 import { toPng } from "html-to-image";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { downloadIcsFile, generateGoogleCalendarUrl } from "@/utils/calendar";
 
 import { formatTime12h } from "@/utils/time";
 import { Badge } from "@/components/ui/badge";
@@ -23,13 +27,26 @@ export default function ScheduleDetailsPage() {
   const { data: bookings, isLoading: isBookingsLoading } = useBookings(id);
   const deleteSchedule = useDeleteSchedule();
   const updateBookingStatus = useUpdateBookingStatus();
+  const updateSchedule = useUpdateSchedule();
+  const { logAction } = useAuditLog();
 
   const [origin, setOrigin] = useState("");
+  const [copied, setCopied] = useState(false);
   const qrCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setOrigin(window.location.origin);
   }, []);
+
+  // HIPAA Audit Logging: Log when patient list is viewed
+  useEffect(() => {
+    if (bookings && bookings.length > 0) {
+      logAction('VIEW_PATIENT_LIST', id, 'schedule', { 
+        patient_count: bookings.length,
+        schedule_title: schedule?.title 
+      });
+    }
+  }, [bookings, id]);
 
   if (isScheduleLoading) return <div className="p-8">Loading schedule...</div>;
   if (!schedule) return <div className="p-8">Schedule not found.</div>;
@@ -56,7 +73,30 @@ export default function ScheduleDetailsPage() {
   const updateStatus = async (bookingId: string, status: any) => {
     if (status === 'cancelled' && !confirm("Are you sure you want to cancel this booking?")) return;
     try {
+      const booking = bookings?.find(b => b.id === bookingId);
+      const prevStatus = booking?.status;
+
       await updateBookingStatus.mutateAsync({ id: bookingId, status });
+      
+      // If promoting from waitlist to confirmed, send email
+      if (prevStatus === 'queued' && status === 'confirmed' && booking) {
+        try {
+          await fetch('/api/bookings/email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ booking, schedule, type: 'promotion' }),
+          });
+        } catch (emailErr) {
+          console.error("Failed to send promotion email:", emailErr);
+        }
+      }
+
+      // Log Audit Event
+      logAction('UPDATE_BOOKING_STATUS', bookingId, 'booking', { 
+        new_status: status, 
+        previous_status: prevStatus 
+      });
+
       toast.success(`Booking ${status}`);
     } catch (error) {
       toast.error(`Failed to ${status} booking`);
@@ -86,13 +126,33 @@ export default function ScheduleDetailsPage() {
         {/* Left Column: Details */}
         <div className="space-y-6">
           <div className="bg-card rounded-3xl p-6 shadow-sm shadow-black/[0.02] border border-border/40">
-            <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-              schedule.status === 'open' ? 'bg-emerald-100 text-emerald-800' :
-              schedule.status === 'full' ? 'bg-red-100 text-red-800' :
-              'bg-gray-100 text-gray-800'
-            }`}>
-              {schedule.status}
-            </span>
+            <div className="flex items-center justify-between">
+              <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                schedule.status === 'open' ? 'bg-emerald-100 text-emerald-800' :
+                schedule.status === 'full' ? 'bg-red-100 text-red-800' :
+                'bg-gray-100 text-gray-800'
+              }`}>
+                {schedule.status}
+              </span>
+              
+              <div className="flex items-center gap-2">
+                <Label htmlFor="waitlist-toggle" className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest cursor-pointer">Waitlist</Label>
+                <Switch 
+                  id="waitlist-toggle" 
+                  checked={schedule.queue_enabled} 
+                  disabled={updateSchedule.isPending}
+                  onCheckedChange={async (checked) => {
+                    try {
+                      await updateSchedule.mutateAsync({ id, data: { queue_enabled: checked } });
+                      toast.success(`Waitlist ${checked ? 'enabled' : 'disabled'}`);
+                    } catch (err) {
+                      toast.error("Failed to update waitlist setting");
+                    }
+                  }}
+                  className="scale-75 origin-right"
+                />
+              </div>
+            </div>
             
             <h1 className="text-2xl font-bold mt-4 tracking-tight">{schedule.title}</h1>
             <p className="text-muted-foreground font-medium text-sm mt-1 mb-6">
@@ -104,9 +164,12 @@ export default function ScheduleDetailsPage() {
                 <span className="text-muted-foreground">Time:</span>
                 <span className="text-foreground tracking-tight">{formatTime12h(schedule.start_time)} - {formatTime12h(schedule.end_time)}</span>
               </div>
-              <div className="flex justify-between items-center text-sm font-medium">
-                <span className="text-muted-foreground">Slot Duration:</span>
-                <span className="text-foreground">{schedule.slot_duration} mins</span>
+               <div className="flex justify-between items-start text-sm font-medium">
+                <span className="text-muted-foreground">Session Duration:</span>
+                <div className="text-right">
+                  <span className="text-foreground font-bold block">45 mins Total</span>
+                  <span className="text-[10px] text-muted-foreground block leading-tight mt-0.5">30m treatment • 15m assessment</span>
+                </div>
               </div>
               <div className="flex justify-between items-center text-sm font-medium">
                 <span className="text-muted-foreground">Capacity:</span>
@@ -118,56 +181,125 @@ export default function ScheduleDetailsPage() {
               </div>
             </div>
 
-            <Button 
-              variant="outline" 
-              className="w-full rounded-xl text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 bg-transparent"
-              onClick={handleDelete}
-              disabled={deleteSchedule.isPending}
-            >
-              {deleteSchedule.isPending ? "Deleting..." : "Delete Schedule"}
-            </Button>
+            <div className="pt-6 border-t border-border/40">
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-4">Admin Reminders</p>
+              <div className="grid grid-cols-2 gap-3">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="rounded-xl h-10 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all font-bold text-[10px] flex items-center gap-2"
+                  onClick={() => {
+                    const date = new Date(schedule.date);
+                    const [sh, sm] = (schedule.start_time || "08:00").split(':');
+                    const [eh, em] = (schedule.end_time || "08:30").split(':');
+                    
+                    const start = new Date(date);
+                    start.setHours(parseInt(sh), parseInt(sm), 0, 0);
+                    
+                    const end = new Date(date);
+                    end.setHours(parseInt(eh), parseInt(em), 0, 0);
+
+                    const googleUrl = generateGoogleCalendarUrl({
+                      title: `ADMIN: ${schedule.title} (${occupiedCount}/${schedule.capacity} Booked)`,
+                      description: `Palawan Acupuncture Session\nTotal booked: ${occupiedCount} users.\nhttps://palawan_acupuncture_booking_system.vercel.app/admin/schedules/${id}`,
+                      location: "Palawan Clinic",
+                      startTime: start.toISOString(),
+                      endTime: end.toISOString()
+                    });
+                    window.open(googleUrl, '_blank');
+                  }}
+                >
+                  <Share2 size={14} /> G-Calendar
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="rounded-xl h-10 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all font-bold text-[10px] flex items-center gap-2"
+                  onClick={() => {
+                    const date = new Date(schedule.date);
+                    const [sh, sm] = (schedule.start_time || "08:00").split(':');
+                    const [eh, em] = (schedule.end_time || "08:30").split(':');
+                    
+                    const start = new Date(date);
+                    start.setHours(parseInt(sh), parseInt(sm), 0, 0);
+                    
+                    const end = new Date(date);
+                    end.setHours(parseInt(eh), parseInt(em), 0, 0);
+
+                    downloadIcsFile({
+                      title: `ADMIN: ${schedule.title} (${occupiedCount}/${schedule.capacity} Booked)`,
+                      description: `Palawan Acupuncture Session\nTotal booked: ${occupiedCount} users.\nhttps://palawan_acupuncture_booking_system.vercel.app/admin/schedules/${id}`,
+                      location: "Palawan Clinic",
+                      startTime: start.toISOString(),
+                      endTime: end.toISOString()
+                    });
+                  }}
+                >
+                  <Download size={14} /> Device Sync
+                </Button>
+              </div>
+            </div>
           </div>
 
+          <Button 
+            variant="outline" 
+            className="w-full rounded-xl text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 bg-transparent"
+            onClick={handleDelete}
+            disabled={deleteSchedule.isPending}
+          >
+            {deleteSchedule.isPending ? "Deleting..." : "Delete Schedule"}
+          </Button>
+          
           <div className="bg-card rounded-3xl p-6 shadow-sm shadow-black/[0.02] border border-border/40 text-center">
-            <h3 className="text-lg font-bold">Check-in QR</h3>
+            <h3 className="text-lg font-bold tracking-tight">Check-in QR</h3>
             <p className="text-[11px] text-muted-foreground mt-1 mb-4">Clients can scan this to book directly.</p>
-            <div className="mx-auto w-40 h-40 bg-white border-2 border-secondary/20 rounded-2xl flex items-center justify-center p-3 relative overflow-hidden group">
+            <div className="mx-auto w-40 h-40 bg-white border-2 border-secondary/20 rounded-2xl flex items-center justify-center p-3 mb-6">
               {origin ? (
                 <QRCode value={bookingUrl} size={130} style={{ height: "auto", maxWidth: "100%", width: "100%" }} />
               ) : (
                 <div className="w-full h-full bg-secondary/10 animate-pulse rounded-xl" />
               )}
-              
-              <div className="absolute inset-0 bg-background/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
-                <Button size="sm" variant="secondary" className="h-8 text-xs font-bold w-24" onClick={() => navigator.clipboard.writeText(bookingUrl)}>
-                  Copy Link
-                </Button>
-                <Button size="sm" className="h-8 text-xs font-bold w-24 bg-primary hover:bg-primary/90 text-white" onClick={handleDownloadQr}>
-                  Download
-                </Button>
-              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <Button 
+                size="sm" 
+                variant="secondary" 
+                className={`h-9 text-[10px] font-bold rounded-xl border border-border/50 transition-all ${copied ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : ''}`}
+                onClick={() => {
+                  navigator.clipboard.writeText(bookingUrl);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                  toast.success("Booking link copied!");
+                }}
+              >
+                {copied ? "Copied!" : "Copy Link"}
+              </Button>
+              <Button size="sm" className="h-9 text-[10px] font-bold rounded-xl bg-[#593f31] hover:bg-[#593f31]/90 text-white shadow-sm" onClick={handleDownloadQr}>
+                Download
+              </Button>
             </div>
           </div>
-        </div>
 
-        {/* Hidden QR Export Card */}
-        {origin && (
-          <div className="absolute top-[-9999px] left-[-9999px]">
-            <div ref={qrCardRef} className="bg-white p-8 rounded-3xl w-[400px] flex flex-col items-center justify-center font-sans tracking-tight">
-              <h2 className="text-3xl font-black text-[#593f31] mb-8 tracking-tighter">Palawan Acupuncture</h2>
-              <div className="bg-white p-2 rounded-2xl border-4 border-[#593f31]/10">
-                <QRCode value={bookingUrl} size={250} style={{ height: "auto", maxWidth: "100%", width: "100%" }} />
-              </div>
-              <div className="mt-8 text-center text-[#593f31] font-bold text-xl leading-snug">
-                <p>{format(new Date(schedule.date), 'EEEE, MMMM do, yyyy')}</p>
-                <p className="mt-1 text-[#593f31]/70">{schedule.start_time} - {schedule.end_time}</p>
-              </div>
-              <div className="mt-8 pt-6 border-t border-[#593f31]/10 w-full text-center text-sm text-[#593f31]/50 font-black tracking-widest uppercase">
-                Scan to Book Session
+          {/* Hidden QR Export Card */}
+          {origin && (
+            <div className="absolute top-[-9999px] left-[-9999px]">
+              <div ref={qrCardRef} className="bg-white p-8 rounded-3xl w-[400px] flex flex-col items-center justify-center font-sans tracking-tight">
+                <h2 className="text-3xl font-black text-[#593f31] mb-8 tracking-tighter">Palawan Acupuncture</h2>
+                <div className="bg-white p-2 rounded-2xl border-4 border-[#593f31]/10">
+                  <QRCode value={bookingUrl} size={250} style={{ height: "auto", maxWidth: "100%", width: "100%" }} />
+                </div>
+                <div className="mt-8 text-center text-[#593f31] font-bold text-xl leading-snug">
+                  <p>{format(new Date(schedule.date), 'EEEE, MMMM do, yyyy')}</p>
+                  <p className="mt-1 text-[#593f31]/70">{schedule.start_time} - {schedule.end_time}</p>
+                </div>
+                <div className="mt-8 pt-6 border-t border-[#593f31]/10 w-full text-center text-sm text-[#593f31]/50 font-black tracking-widest uppercase">
+                  Scan to Book Session
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Right Column: Patients */}
         <div className="lg:col-span-2">
