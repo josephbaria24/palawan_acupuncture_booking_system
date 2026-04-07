@@ -84,7 +84,6 @@ export default function PublicCalendarScreen() {
                   mode="single"
                   selected={selectedDate}
                   onSelect={setSelectedDate}
-                  enableYearNavigation
                   modifiers={{
                     hasSessions: datesWithSessions,
                     hasAvailableSlots: datesWithAvailableSlots,

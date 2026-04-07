@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { RecentActivity } from "@/components/admin/RecentActivity";
 
 const PetroCoreXBranding = () => (
   <div className="flex items-center justify-center gap-0 py-2.5 px-2 rounded-xl text-[10px] font-bold shadow-2xl">
@@ -98,6 +99,10 @@ export function AdminLayout({ children }: { children: ReactNode }) {
             )
           })}
         </nav>
+
+        <div className="flex-1 min-h-0">
+          <RecentActivity />
+        </div>
 
         <div className="p-4 space-y-4 border-t border-border">
           {user && (

@@ -16,6 +16,8 @@ import {
   CheckCircle2,
   Clock3,
   XCircle,
+  UserX,
+  Trash2,
   ExternalLink
 } from "lucide-react";
 import { useState, useMemo } from "react";
@@ -229,6 +231,10 @@ export default function AdminClients() {
                                 ) : booking.status === 'queued' ? (
                                   <div className="p-2 bg-amber-500/10 text-amber-600 rounded-xl">
                                     <Clock3 size={16} />
+                                  </div>
+                                ) : booking.status === 'no-show' ? (
+                                  <div className="p-2 bg-orange-500/10 text-orange-600 rounded-xl">
+                                    <UserX size={16} />
                                   </div>
                                 ) : (
                                   <div className="p-2 bg-red-500/10 text-red-600 rounded-xl">

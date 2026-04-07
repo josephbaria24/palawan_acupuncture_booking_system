@@ -1,6 +1,7 @@
 "use client";
 
 import { useSchedules, useCreateSchedule } from "@/hooks/use-acupuncture";
+import { useAuditLog } from "@/hooks/use-audit";
 import { format, parseISO, eachDayOfInterval } from "date-fns";
 import { Plus, Search, Calendar as CalendarIcon, Clock, Users, Filter, ChevronDown, ChevronRight, CalendarDays } from "lucide-react";
 import { useState } from "react";
@@ -22,6 +23,7 @@ import { formatTime12h } from "@/utils/time";
 export default function AdminSchedules() {
   const { data: schedules, isLoading } = useSchedules();
   const createSchedule = useCreateSchedule();
+  const { logAction } = useAuditLog();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -69,7 +71,16 @@ export default function AdminSchedules() {
         });
       });
 
-      await Promise.all(creationPromises);
+      const results = await Promise.all(creationPromises);
+      
+      // Log audit events for each created session
+      results.forEach((res, idx) => {
+        logAction('CREATE_SCHEDULE', res.id, 'schedule', { 
+          title: res.title, 
+          date: res.date,
+          batch: dates.length > 1
+        });
+      });
       
       toast.success(`Schedule added for ${dates.length} date(s) successfully`);
       setIsDialogOpen(false);

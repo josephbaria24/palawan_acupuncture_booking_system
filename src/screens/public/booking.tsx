@@ -1,6 +1,7 @@
 "use client";
 
 import { useSchedule, useCreateBooking } from "@/hooks/use-acupuncture";
+import { useAuditLog } from "@/hooks/use-audit";
 import { 
   Calendar, 
   Clock, 
@@ -36,6 +37,7 @@ interface PublicBookingScreenProps {
 export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
   const { data: schedule, isLoading: isScheduleLoading, error: scheduleError } = useSchedule(id);
   const createBooking = useCreateBooking();
+  const { logAction } = useAuditLog();
 
   const [formData, setFormData] = useState({
     client_name: "",
@@ -78,6 +80,12 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
         assigned_by: 'client'
       });
       
+      logAction('NEW_BOOKING', result.id, 'booking', { 
+        client_name: formData.client_name,
+        schedule_id: id,
+        status: result.status
+      });
+
       setBookingRef(result.reference_code);
       setBookingStatus(result.status);
       setIsSuccess(true);

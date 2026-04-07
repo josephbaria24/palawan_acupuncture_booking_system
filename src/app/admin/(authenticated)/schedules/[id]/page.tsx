@@ -3,7 +3,7 @@
 import { useSchedule, useBookings, useDeleteSchedule, useUpdateBookingStatus, useUpdateSchedule } from "@/hooks/use-acupuncture";
 import { useAuditLog } from "@/hooks/use-audit";
 import { format } from "date-fns";
-import { ArrowLeft, X, UserPlus, HelpCircle, Loader2, Calendar as CalendarIcon, Download, Share2 } from "lucide-react";
+import { ArrowLeft, X, UserPlus, HelpCircle, Loader2, Calendar as CalendarIcon, Download, Share2, UserX, Ban } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,12 @@ import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { downloadIcsFile, generateGoogleCalendarUrl } from "@/utils/calendar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 import { formatTime12h } from "@/utils/time";
 import { Badge } from "@/components/ui/badge";
@@ -72,6 +78,7 @@ export default function ScheduleDetailsPage() {
 
   const updateStatus = async (bookingId: string, status: any) => {
     if (status === 'cancelled' && !confirm("Are you sure you want to cancel this booking?")) return;
+    if (status === 'no-show' && !confirm("Mark this patient as no-show?")) return;
     try {
       const booking = bookings?.find(b => b.id === bookingId);
       const prevStatus = booking?.status;
@@ -107,6 +114,12 @@ export default function ScheduleDetailsPage() {
     if (!confirm("Are you sure you want to delete this schedule? This will also remove any associated bookings and cannot be undone.")) return;
     try {
       await deleteSchedule.mutateAsync(id);
+      
+      logAction('DELETE_SCHEDULE', id, 'schedule', { 
+        title: schedule?.title, 
+        date: schedule?.date 
+      });
+
       toast.success("Schedule deleted successfully");
       router.push('/admin/schedules');
     } catch (error) {
@@ -340,12 +353,29 @@ export default function ScheduleDetailsPage() {
                         <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
                           Confirmed
                         </span>
-                        <button 
-                          onClick={() => updateStatus(booking.id, 'cancelled')}
-                          className="w-8 h-8 rounded-full border border-red-200 text-red-500 flex items-center justify-center hover:bg-red-50 hover:text-red-600 transition-colors"
-                        >
-                          <X size={14} strokeWidth={3} />
-                        </button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button 
+                              className="w-8 h-8 rounded-full border border-red-200 text-red-500 flex items-center justify-center hover:bg-red-50 hover:text-red-600 transition-colors shadow-sm"
+                            >
+                              <X size={14} strokeWidth={3} />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="rounded-xl border-border/40 shadow-xl">
+                            <DropdownMenuItem 
+                              className="gap-2 font-bold text-xs py-2.5 cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50"
+                              onClick={() => updateStatus(booking.id, 'cancelled')}
+                            >
+                              <Ban size={14} /> Mark as Cancelled
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="gap-2 font-bold text-xs py-2.5 cursor-pointer text-amber-600 focus:text-amber-700 focus:bg-amber-50"
+                              onClick={() => updateStatus(booking.id, 'no-show')}
+                            >
+                              <UserX size={14} /> Mark as No Show
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   ))

@@ -143,23 +143,27 @@ export default function TrackResultPage() {
           <div className={`p-6 rounded-3xl border flex flex-col md:flex-row md:items-center justify-between gap-6 ${
             isConfirmed ? 'bg-emerald-50/50 border-emerald-100/50' : 
             isQueued ? 'bg-amber-50/50 border-amber-100/50' : 
+            booking.status === 'no-show' ? 'bg-orange-50/50 border-orange-100/50' :
             'bg-red-50/50 border-red-100/50'
           }`}>
             <div className="flex items-start gap-5">
               <div className={`size-14 rounded-full flex items-center justify-center shrink-0 border shadow-lg ${
                 isConfirmed ? 'bg-emerald-500 text-white border-emerald-400' : 
                 isQueued ? 'bg-amber-500 text-white border-amber-400' : 
+                booking.status === 'no-show' ? 'bg-orange-500 text-white border-orange-400' :
                 'bg-red-500 text-white border-red-400'
               }`}>
-                {isConfirmed ? <CheckCircle2 size={28} /> : isQueued ? <CircleDashed size={28} className="animate-spin" /> : <XCircle size={28} />}
+                {isConfirmed ? <CheckCircle2 size={28} /> : isQueued ? <CircleDashed size={28} className="animate-spin" /> : 
+                 booking.status === 'no-show' ? <XCircle size={28} /> : <XCircle size={28} />}
               </div>
               <div className="space-y-1">
                 <h2 className="text-xl font-bold tracking-tight">
-                  Status: {isConfirmed ? 'Confirmed' : isQueued ? 'Waitlisted / Pending' : 'Cancelled'}
+                  Status: {isConfirmed ? 'Confirmed' : isQueued ? 'Waitlisted / Pending' : booking.status === 'no-show' ? 'No Show' : 'Cancelled'}
                 </h2>
                 <p className="text-sm text-muted-foreground font-medium leading-relaxed max-w-sm">
                   {isConfirmed ? "Grateful to have you! Your appointment is locked and ready. See you at the clinic soon." : 
                    isQueued ? "You are on the waitlist. We will notify you immediately if a spot becomes available and your booking is confirmed." : 
+                   booking.status === 'no-show' ? "This session was marked as a no-show. Please follow clinic policies or contact us for more information." :
                    "This session was cancelled. Please contact us for more information."}
                 </p>
               </div>

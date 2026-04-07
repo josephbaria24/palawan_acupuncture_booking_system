@@ -2,7 +2,7 @@
 
 export type PaymentOption = 'cash' | 'card' | 'bank_transfer' | 'e_wallet' | 'pay_on_site';
 export type ScheduleStatus = 'open' | 'full' | 'closed' | 'completed';
-export type BookingStatus = 'confirmed' | 'queued' | 'cancelled';
+export type BookingStatus = 'confirmed' | 'queued' | 'cancelled' | 'no-show';
 
 export interface Schedule {
   id: string;
