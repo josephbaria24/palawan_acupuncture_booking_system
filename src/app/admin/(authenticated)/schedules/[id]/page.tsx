@@ -3,7 +3,7 @@
 import { useSchedule, useBookings, useDeleteSchedule, useUpdateBookingStatus, useUpdateSchedule } from "@/hooks/use-acupuncture";
 import { useAuditLog } from "@/hooks/use-audit";
 import { format } from "date-fns";
-import { ArrowLeft, X, UserPlus, HelpCircle, Loader2, Calendar as CalendarIcon, Download, Share2, UserX, Ban } from "lucide-react";
+import { ArrowLeft, X, UserPlus, HelpCircle, Loader2, Calendar as CalendarIcon, Download, Share2, UserX, Ban, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -183,6 +183,13 @@ export default function ScheduleDetailsPage() {
                   <span className="text-foreground font-bold block">45 mins Total</span>
                   <span className="text-[10px] text-muted-foreground block leading-tight mt-0.5">30m treatment • 15m assessment</span>
                 </div>
+              </div>
+              <div className="flex justify-between items-center text-sm font-medium">
+                <span className="text-muted-foreground">Location:</span>
+                <span className="text-foreground tracking-tight flex items-center gap-1.5 transition-all">
+                  <MapPin size={14} className="text-muted-foreground/70" />
+                  {schedule.location || "Palawan Clinic"}
+                </span>
               </div>
               <div className="flex justify-between items-center text-sm font-medium">
                 <span className="text-muted-foreground">Capacity:</span>

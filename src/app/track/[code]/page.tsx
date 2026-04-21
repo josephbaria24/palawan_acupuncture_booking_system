@@ -216,7 +216,7 @@ export default function TrackResultPage() {
                   <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5 align-middle">
                     <MapPin size={10} /> Location
                   </p>
-                  <p className="font-bold text-sm">Palawan Clinic</p>
+                  <p className="font-bold text-sm">{schedule.location || "Palawan Clinic"}</p>
                 </div>
               </div>
 
@@ -242,7 +242,7 @@ export default function TrackResultPage() {
                         const googleUrl = generateGoogleCalendarUrl({
                           title: `Acupuncture Session: ${schedule.title}`,
                           description: `Your acupuncture appointment (Ref: ${code}). Please arrive 15 minutes before your slot.`,
-                          location: "Palawan Clinic",
+                          location: schedule.location || "Palawan Clinic",
                           startTime: start.toISOString(),
                           endTime: end.toISOString()
                         });
@@ -269,7 +269,7 @@ export default function TrackResultPage() {
                         downloadIcsFile({
                           title: `Acupuncture Session: ${schedule.title}`,
                           description: `Your acupuncture appointment (Ref: ${code}). Please arrive 15 minutes before your slot.`,
-                          location: "Palawan Clinic",
+                          location: schedule.location || "Palawan Clinic",
                           startTime: start.toISOString(),
                           endTime: end.toISOString()
                         });

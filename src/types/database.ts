@@ -8,6 +8,7 @@ export interface Schedule {
   id: string;
   title: string;
   date: string; // YYYY-MM-DD
+  location: string;
   start_time: string; // HH:mm
   end_time: string; // HH:mm
   slot_duration: number; // minutes

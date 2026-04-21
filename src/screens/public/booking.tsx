@@ -14,7 +14,8 @@ import {
   Loader2,
   CreditCard,
   Download,
-  Share2
+  Share2,
+  MapPin
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
@@ -180,13 +181,13 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
                         const end = new Date(date);
                         end.setHours(parseInt(eh), parseInt(em), 0, 0);
 
-                      const googleUrl = generateGoogleCalendarUrl({
-                        title: `Acupuncture Session: ${schedule.title}`,
-                        description: `Your acupuncture appointment (Ref: ${bookingRef}). Please arrive 15 minutes before your slot.`,
-                        location: "Palawan Clinic",
-                        startTime: start.toISOString(),
-                        endTime: end.toISOString()
-                      });
+                        const googleUrl = generateGoogleCalendarUrl({
+                          title: `Acupuncture Session: ${schedule.title}`,
+                          description: `Your acupuncture appointment (Ref: ${bookingRef}). Please arrive 15 minutes before your slot.`,
+                          location: schedule.location || "Palawan Clinic",
+                          startTime: start.toISOString(),
+                          endTime: end.toISOString()
+                        });
                       window.open(googleUrl, '_blank');
                     }}
                   >
@@ -207,13 +208,13 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
                         const end = new Date(date);
                         end.setHours(parseInt(eh), parseInt(em), 0, 0);
 
-                      downloadIcsFile({
-                        title: `Acupuncture Session: ${schedule.title}`,
-                        description: `Your acupuncture appointment (Ref: ${bookingRef}). Please arrive 15 minutes before your slot.`,
-                        location: "Palawan Clinic",
-                        startTime: start.toISOString(),
-                        endTime: end.toISOString()
-                      });
+                        downloadIcsFile({
+                          title: `Acupuncture Session: ${schedule.title}`,
+                          description: `Your acupuncture appointment (Ref: ${bookingRef}). Please arrive 15 minutes before your slot.`,
+                          location: schedule.location || "Palawan Clinic",
+                          startTime: start.toISOString(),
+                          endTime: end.toISOString()
+                        });
                     }}
                   >
                     <Download size={16} /> Device Calendar (.ics)
@@ -374,6 +375,18 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
               </div>
               <CardContent className="p-6 space-y-6">
                 <div className="space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-secondary/50 flex items-center justify-center text-primary shrink-0 border border-secondary">
+                      <MapPin size={18} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Location</p>
+                      <p className="font-bold text-foreground">
+                        {schedule.location || "Palawan Clinic"}
+                      </p>
+                    </div>
+                  </div>
+
                   <div className="flex items-start gap-4">
                     <div className="w-10 h-10 rounded-xl bg-secondary/50 flex items-center justify-center text-primary shrink-0 border border-secondary">
                       <Calendar size={18} />

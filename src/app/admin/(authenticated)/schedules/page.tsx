@@ -3,11 +3,12 @@
 import { useSchedules, useCreateSchedule } from "@/hooks/use-acupuncture";
 import { useAuditLog } from "@/hooks/use-audit";
 import { format, parseISO, eachDayOfInterval } from "date-fns";
-import { Plus, Search, Calendar as CalendarIcon, Clock, Users, Filter, ChevronDown, ChevronRight, CalendarDays } from "lucide-react";
-import { useState } from "react";
+import { Plus, Search, Calendar as CalendarIcon, Clock, Users, Filter, ChevronDown, ChevronRight, CalendarDays, MapPin, Check, ChevronsUpDown } from "lucide-react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -40,8 +41,71 @@ export default function AdminSchedules() {
     queue_enabled: true,
     price: 1500,
     payment_options: ['cash', 'card', 'gcash', 'bank'] as any[],
-    notes: ""
+    notes: "",
+    location: ""
   });
+
+  const [provinces, setProvinces] = useState<{ code: string; name: string }[]>([]);
+  const [cities, setCities] = useState<{ code: string; name: string }[]>([]);
+  const [selectedProvince, setSelectedProvince] = useState<string>("");
+  const [selectedCity, setSelectedCity] = useState<string>("");
+  const [streetAddress, setStreetAddress] = useState<string>("");
+  const [openProvince, setOpenProvince] = useState(false);
+  const [openCity, setOpenCity] = useState(false);
+
+  useEffect(() => {
+    // Primary: PSGC Cloud API
+    fetch("https://psgc.cloud/api/provinces")
+      .then(res => {
+        if (!res.ok) throw new Error("Primary API failed");
+        return res.json();
+      })
+      .then(data => setProvinces(data.sort((a: any, b: any) => a.name.localeCompare(b.name))))
+      .catch(err => {
+        console.error("Primary fetch failed, trying fallback:", err);
+        // Fallback: GitHub Raw (very reliable for CORS)
+        fetch("https://raw.githubusercontent.com/flores-jacob/psgc-api/master/provinces.json")
+          .then(res => res.json())
+          .then(data => setProvinces(data.sort((a: any, b: any) => a.name.localeCompare(b.name))))
+          .catch(fallbackErr => {
+            console.error("All location fetches failed", fallbackErr);
+            toast.error("Could not load locations. Please check your connection.");
+          });
+      });
+  }, []);
+
+  useEffect(() => {
+    if (selectedProvince) {
+      fetch(`https://psgc.cloud/api/provinces/${selectedProvince}/cities-municipalities`)
+        .then(res => {
+          if (!res.ok) throw new Error("Primary API failed");
+          return res.json();
+        })
+        .then(data => setCities(data.sort((a: any, b: any) => a.name.localeCompare(b.name))))
+        .catch(err => {
+          console.error("Primary city fetch failed, trying local filter from full list:");
+          // If primary fails, try a direct fetch from the Gitlab mirror which might be handled differently by the browser
+          fetch(`https://psgc.cloud/api/provinces/${selectedProvince}/cities-municipalities`)
+            .then(res => res.json())
+            .then(data => setCities(data.sort((a: any, b: any) => a.name.localeCompare(b.name))))
+            .catch(() => toast.error("Failed to load cities for this province"));
+        });
+    } else {
+      setCities([]);
+    }
+  }, [selectedProvince]);
+
+  useEffect(() => {
+    const provinceName = provinces.find(p => p.code === selectedProvince)?.name;
+    const cityName = cities.find(c => c.code === selectedCity)?.name;
+    
+    if (provinceName && cityName) {
+      const fullLocation = streetAddress 
+        ? `${streetAddress}, ${cityName}, ${provinceName}` 
+        : `${cityName}, ${provinceName}`;
+      setNewSlot(prev => ({ ...prev, location: fullLocation }));
+    }
+  }, [selectedCity, selectedProvince, streetAddress, provinces, cities]);
 
   const [expandedMonths, setExpandedMonths] = useState<string[]>([format(new Date(), 'MMMM yyyy')]);
   const [statusFilter, setStatusFilter] = useState("all"); // Default to all status
@@ -138,6 +202,113 @@ export default function AdminSchedules() {
               </div>
 
               <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Location</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Popover open={openProvince} onOpenChange={setOpenProvince}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={openProvince}
+                        className="w-full justify-between rounded-xl bg-secondary/5 border-border/40 h-10 font-normal hover:bg-secondary/10"
+                      >
+                        <span className="truncate">
+                          {selectedProvince
+                            ? provinces.find((p) => p.code === selectedProvince)?.name
+                            : "Province"}
+                        </span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[200px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search province..." className="h-9" />
+                        <CommandList>
+                          <CommandEmpty>No province found.</CommandEmpty>
+                          <CommandGroup>
+                            {provinces.map((p) => (
+                              <CommandItem
+                                key={p.code}
+                                value={p.name}
+                                onSelect={() => {
+                                  setSelectedProvince(p.code);
+                                  setSelectedCity("");
+                                  setOpenProvince(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedProvince === p.code ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {p.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+
+                  <Popover open={openCity} onOpenChange={setOpenCity}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={openCity}
+                        disabled={!selectedProvince}
+                        className="w-full justify-between rounded-xl bg-secondary/5 border-border/40 h-10 font-normal hover:bg-secondary/10 disabled:opacity-50"
+                      >
+                        <span className="truncate">
+                          {selectedCity
+                            ? cities.find((c) => c.code === selectedCity)?.name
+                            : "City/Mun"}
+                        </span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[200px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search city..." className="h-9" />
+                        <CommandList>
+                          <CommandEmpty>No city found.</CommandEmpty>
+                          <CommandGroup>
+                            {cities.map((c) => (
+                              <CommandItem
+                                key={c.code}
+                                value={c.name}
+                                onSelect={() => {
+                                  setSelectedCity(c.code);
+                                  setOpenCity(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedCity === c.code ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {c.name}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div className="mt-2 text-primary font-bold">
+                  <Input 
+                    placeholder="Street, Building, Unit (Optional)" 
+                    value={streetAddress} 
+                    onChange={(e) => setStreetAddress(e.target.value)}
+                    className="rounded-xl bg-secondary/5 h-10 border-border/40 placeholder:text-muted-foreground/50"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
                 <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Date Range</label>
                 <Popover>
                   <PopoverTrigger asChild>
@@ -191,11 +362,27 @@ export default function AdminSchedules() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Capacity</label>
-                  <Input type="number" value={newSlot.capacity} onChange={(e) => setNewSlot({...newSlot, capacity: parseInt(e.target.value)})} className="rounded-xl bg-secondary/5" />
+                  <Input 
+                    type="number" 
+                    value={isNaN(newSlot.capacity) ? "" : newSlot.capacity} 
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setNewSlot({...newSlot, capacity: val === "" ? 0 : parseInt(val)});
+                    }} 
+                    className="rounded-xl bg-secondary/5" 
+                  />
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Price (₱)</label>
-                  <Input type="number" value={newSlot.price} onChange={(e) => setNewSlot({...newSlot, price: parseInt(e.target.value)})} className="rounded-xl bg-secondary/5" />
+                  <Input 
+                    type="number" 
+                    value={isNaN(newSlot.price) ? "" : newSlot.price} 
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setNewSlot({...newSlot, price: val === "" ? 0 : parseInt(val)});
+                    }} 
+                    className="rounded-xl bg-secondary/5" 
+                  />
                 </div>
               </div>
               
@@ -337,6 +524,10 @@ export default function AdminSchedules() {
                             <h3 className="text-lg font-bold tracking-tight text-foreground mt-2 mb-4">{schedule.title}</h3>
 
                             <div className="space-y-3">
+                              <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
+                                <MapPin size={14} className="text-muted-foreground/70 shrink-0" />
+                                <span className="font-bold truncate">{schedule.location || "Palawan Clinic"}</span>
+                              </div>
                               <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
                                 <CalendarIcon size={14} className="text-muted-foreground/70 shrink-0" />
                                 <span className="font-bold">{format(new Date(schedule.date), 'EEEE, MMM dd')}</span>
