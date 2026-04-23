@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
-import { RecentActivity } from "@/components/admin/RecentActivity";
 
 const PetroCoreXBranding = () => (
   <div className="flex items-center justify-center gap-0 py-2.5 px-2 rounded-xl text-[10px] font-bold shadow-2xl">
@@ -57,11 +56,11 @@ export function AdminLayout({ children }: { children: ReactNode }) {
 
       {/* Sidebar (Desktop & Mobile Drawer) */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-72 bg-card border-r border-border flex flex-col transform transition-transform duration-500 ease-in-out
-        md:relative md:translate-x-0 md:w-64
+        fixed inset-y-0 left-0 z-50 w-72 bg-card shadow-2xl flex flex-col transform transition-transform duration-500 ease-in-out
+        md:relative md:translate-x-0 md:w-64 md:shadow-xl
         ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
       `}>
-        <div className="p-6 border-b border-border flex items-center justify-between">
+        <div className="p-6 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group select-none">
             <div className="w-10 h-10 rounded-xl overflow-hidden bg-white/40 border border-white/50 flex items-center justify-center shadow-sm transition-transform duration-300 group-hover:scale-105">
               <img src="/images/logo.png" alt="Palawan Acupuncture Logo" className="w-full h-full object-contain" />
@@ -100,11 +99,8 @@ export function AdminLayout({ children }: { children: ReactNode }) {
           })}
         </nav>
 
-        <div className="flex-1 min-h-0">
-          <RecentActivity />
-        </div>
 
-        <div className="p-4 space-y-4 border-t border-border">
+        <div className="p-4 space-y-4">
           {user && (
             <div className="px-4 py-2">
               <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 mb-1">Signed in as</p>
@@ -128,7 +124,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
       {/* Main Content */}
       <main className="flex-1 flex flex-col max-h-screen overflow-hidden">
         {/* Mobile Header */}
-        <header className="md:hidden bg-card border-b border-border px-4 py-3 flex items-center justify-between z-30">
+        <header className="md:hidden bg-card shadow-sm px-4 py-3 flex items-center justify-between z-30">
           <div className="flex items-center gap-4">
             <button
               onClick={toggleSidebar}

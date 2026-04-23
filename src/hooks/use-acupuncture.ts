@@ -263,3 +263,37 @@ export function useCalendarSettings() {
     }
   });
 }
+
+export function useClinicLocations() {
+  return useQuery({
+    queryKey: ['clinic-locations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('clinic_locations')
+        .select('*')
+        .order('name', { ascending: true });
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+}
+
+export function useCreateClinicLocation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { name: string, address: string, is_default?: boolean }) => {
+      const { data: newLocation, error } = await supabase
+        .from('clinic_locations')
+        .insert([data])
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return newLocation;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clinic-locations'] });
+    }
+  });
+}

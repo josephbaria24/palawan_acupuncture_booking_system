@@ -1,9 +1,9 @@
 "use client";
 
-import { useSchedules, useCreateSchedule } from "@/hooks/use-acupuncture";
+import { useSchedules, useCreateSchedule, useClinicLocations, useCreateClinicLocation } from "@/hooks/use-acupuncture";
 import { useAuditLog } from "@/hooks/use-audit";
 import { format, parseISO, eachDayOfInterval } from "date-fns";
-import { Plus, Search, Calendar as CalendarIcon, Clock, Users, Filter, ChevronDown, ChevronRight, CalendarDays, MapPin, Check, ChevronsUpDown } from "lucide-react";
+import { Plus, Search, Calendar as CalendarIcon, Clock, Users, Filter, ChevronDown, ChevronRight, CalendarDays, MapPin, Check, ChevronsUpDown, Save } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,10 +21,13 @@ import { Label } from "@/components/ui/label";
 
 import { formatTime12h } from "@/utils/time";
 import { AdminCalendarSyncDialog } from "@/components/admin/AdminCalendarSyncDialog";
+import { ScheduleCalendar } from "@/components/admin/ScheduleCalendar";
 
 export default function AdminSchedules() {
   const { data: schedules, isLoading } = useSchedules();
   const createSchedule = useCreateSchedule();
+  const { data: locations } = useClinicLocations();
+  const createLocation = useCreateClinicLocation();
   const { logAction } = useAuditLog();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -109,8 +112,25 @@ export default function AdminSchedules() {
   }, [selectedCity, selectedProvince, streetAddress, provinces, cities]);
 
   const [expandedMonths, setExpandedMonths] = useState<string[]>([format(new Date(), 'MMMM yyyy')]);
-  const [statusFilter, setStatusFilter] = useState("all"); // Default to all status
+  const [statusFilter, setStatusFilter] = useState("all");
   const [sortOrder, setSortOrder] = useState("asc");
+
+  // Auto-fill location from the most recent schedule when opening the dialog
+  useEffect(() => {
+    if (isDialogOpen && schedules && schedules.length > 0) {
+      // Find the most recent schedule that has a location
+      const withLocation = [...schedules]
+        .filter(s => s.location && s.location.trim() !== "")
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      
+      if (withLocation.length > 0 && !newSlot.location) {
+        const lastLocation = withLocation[0].location;
+        setNewSlot(prev => ({ ...prev, location: lastLocation }));
+        // Also set the street address field for display
+        setStreetAddress("");
+      }
+    }
+  }, [isDialogOpen]);
 
   const toggleMonth = (month: string) => {
     setExpandedMonths(prev => 
@@ -128,6 +148,19 @@ export default function AdminSchedules() {
       const dates = dateRange.to 
         ? eachDayOfInterval({ start: dateRange.from, end: dateRange.to })
         : [dateRange.from];
+
+      // Save location to clinic_locations if it's new
+      if (newSlot.location && !locations?.some(loc => loc.address === newSlot.location)) {
+        try {
+          await createLocation.mutateAsync({
+            name: newSlot.location.split(',')[0], // Use first part as name
+            address: newSlot.location,
+            is_default: locations?.length === 0
+          });
+        } catch (err) {
+          console.error("Failed to save new location:", err);
+        }
+      }
 
       const creationPromises = dates.map(date => {
         return createSchedule.mutateAsync({
@@ -206,7 +239,23 @@ export default function AdminSchedules() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Location</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Location</label>
+                  {locations && locations.length > 0 && (
+                    <Select onValueChange={(val) => setNewSlot(prev => ({ ...prev, location: val }))}>
+                      <SelectTrigger className="h-6 w-auto border-none bg-transparent p-0 text-[10px] font-bold text-primary hover:text-primary/80 focus:ring-0">
+                        <SelectValue placeholder="Use Saved" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl border-border/40 shadow-xl">
+                        {locations.map(loc => (
+                          <SelectItem key={loc.id} value={loc.address} className="text-xs font-bold">
+                            {loc.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
                 <div className="grid grid-cols-2 gap-2">
                   <Popover open={openProvince} onOpenChange={setOpenProvince}>
                     <PopoverTrigger asChild>
@@ -452,116 +501,11 @@ export default function AdminSchedules() {
         </div>
       </div>
 
+      {/* Calendar View */}
       {isLoading ? (
-        <div className="col-span-full p-12 text-center text-muted-foreground font-medium">Loading schedules...</div>
-      ) : filteredSchedules?.length === 0 ? (
-        <div className="col-span-full p-12 text-center text-muted-foreground bg-white shadow-sm border border-dashed border-border/50 rounded-[2rem]">
-          No schedules found matching your search and filter conditions.
-        </div>
+        <div className="p-12 text-center text-muted-foreground font-medium">Loading schedules...</div>
       ) : (
-        <div className="space-y-6">
-          {Object.entries(
-            (filteredSchedules || []).reduce((acc, schedule) => {
-              const month = format(new Date(schedule.date), 'MMMM yyyy');
-              if (!acc[month]) acc[month] = [];
-              acc[month].push(schedule);
-              return acc;
-            }, {} as Record<string, any[]>)
-          ).map(([month, monthSchedules]) => {
-            const isExpanded = expandedMonths.includes(month);
-            const displaySchedules = monthSchedules || [];
-            
-            return (
-              <div key={month} className="space-y-4">
-                <button 
-                  onClick={() => toggleMonth(month)}
-                  className="flex items-center justify-between w-full p-6 bg-white border border-border/40 rounded-3xl shadow-sm hover:shadow-md transition-all group"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-2xl bg-secondary/30 flex items-center justify-center text-primary border border-secondary shadow-sm">
-                      <CalendarDays size={20} />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-foreground tracking-tight text-left">{month}</h2>
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-left">{displaySchedules.length} Sessions scheduled</p>
-                    </div>
-                  </div>
-                  <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
-                    <ChevronDown size={20} className="text-muted-foreground" />
-                  </div>
-                </button>
-                
-                {isExpanded && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                    {displaySchedules.map((schedule) => {
-                      const occupiedCount = schedule.bookings?.filter((b: any) => b.status === "confirmed").length || 0;
-                      
-                      let displayStatus: string = schedule.status;
-                      let statusColor = "bg-gray-100 text-gray-800";
-                      if (schedule.status === 'open') {
-                        if (occupiedCount >= schedule.capacity) {
-                          displayStatus = 'fully booked';
-                          statusColor = "bg-red-100 text-red-800";
-                        } else if (occupiedCount === schedule.capacity - 1) {
-                          displayStatus = '1 slot left';
-                          statusColor = "bg-orange-100 text-orange-800";
-                        } else {
-                          displayStatus = 'open';
-                          statusColor = "bg-emerald-100 text-emerald-800";
-                        }
-                      } else if (schedule.status === 'full') {
-                        displayStatus = 'fully booked';
-                        statusColor = "bg-red-100 text-red-800";
-                      }
-
-                      return (
-                        <div key={schedule.id} className="bg-card rounded-[2.5rem] p-6 shadow-sm shadow-black/[0.02] border border-border/40 flex flex-col justify-between hover:shadow-lg transition-all">
-                          <div>
-                            <div className="flex items-center justify-between mb-4">
-                              <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${statusColor}`}>
-                                {displayStatus}
-                              </span>
-                              <span className="font-bold text-foreground text-sm flex items-center">
-                                <span className="text-[10px] mr-0.5">₱</span>{schedule.price}
-                              </span>
-                            </div>
-
-                            <h3 className="text-lg font-bold tracking-tight text-foreground mt-2 mb-4">{schedule.title}</h3>
-
-                            <div className="space-y-3">
-                              <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
-                                <MapPin size={14} className="text-muted-foreground/70 shrink-0" />
-                                <span className="font-bold truncate">{schedule.location || "Palawan Clinic"}</span>
-                              </div>
-                              <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
-                                <CalendarIcon size={14} className="text-muted-foreground/70 shrink-0" />
-                                <span className="font-bold">{format(new Date(schedule.date), 'EEEE, MMM dd')}</span>
-                              </div>
-                              <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
-                                <Clock size={14} className="text-muted-foreground/70 shrink-0" />
-                                <span>{formatTime12h(schedule.start_time)} - {formatTime12h(schedule.end_time)}</span>
-                              </div>
-                              <div className="flex items-center gap-3 text-xs font-medium text-muted-foreground">
-                                <Users size={14} className="text-muted-foreground/70 shrink-0" />
-                                <span className="font-bold text-foreground">{occupiedCount} / {schedule.capacity} <span className="font-normal text-muted-foreground ml-1">slots booked</span></span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="mt-6 pt-5 border-t border-border/40">
-                            <Link href={`/admin/schedules/${schedule.id}`} className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center justify-between w-full group">
-                              Manage Session <ChevronRight size={14} className="translate-x-0 group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        <ScheduleCalendar schedules={filteredSchedules || []} isLoading={isLoading} />
       )}
     </div>
   );
