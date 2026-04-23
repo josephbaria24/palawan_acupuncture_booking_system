@@ -21,6 +21,7 @@ import { supabase } from "@/lib/supabase";
 
 export function AdminCalendarSyncDialog() {
   const [activeTab, setActiveTab] = useState<"google" | "apple">("google");
+  const isLocalhost = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 
   const feedUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/api/calendar?admin=true`;
   const appleCalendarUrl = feedUrl.replace("https://", "webcal://").replace("http://", "webcal://");
@@ -46,14 +47,14 @@ export function AdminCalendarSyncDialog() {
           Calendar Sync
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[95vw] sm:max-w-[500px] rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl">
-        <div className="bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-8 md:p-10">
-          <DialogHeader className="mb-8">
-            <DialogTitle className="text-2xl font-display font-black tracking-tight">Clinic Schedule Sync</DialogTitle>
-            <p className="text-muted-foreground text-sm font-medium">Sync all clinic sessions to your personal or staff calendar.</p>
+      <DialogContent className="w-[95vw] sm:max-w-[500px] rounded-[1.5rem] sm:rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl">
+        <div className="bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-5 sm:p-10">
+          <DialogHeader className="mb-6 sm:mb-8">
+            <DialogTitle className="text-xl sm:text-2xl font-display font-black tracking-tight">Clinic Schedule Sync</DialogTitle>
+            <p className="text-muted-foreground text-xs sm:text-sm font-medium">Sync all clinic sessions to your personal or staff calendar.</p>
           </DialogHeader>
 
-          <div className="flex bg-secondary/30 p-1 rounded-2xl w-full border border-secondary/40 mb-8">
+          <div className="flex bg-secondary/30 p-1 rounded-2xl w-full border border-secondary/40 mb-6 sm:mb-8">
             <button
               onClick={() => setActiveTab("google")}
               className={`flex-1 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
@@ -93,8 +94,8 @@ export function AdminCalendarSyncDialog() {
                       </svg>
                     </div>
                     <div className="space-y-1">
-                      <p className="font-bold text-base">Direct Account Sync</p>
-                      <p className="text-xs text-muted-foreground leading-relaxed font-medium">
+                      <p className="font-bold text-sm sm:text-base">Direct Account Sync</p>
+                      <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed font-medium">
                         Securely connect your Google account to automatically push clinic schedules to your primary calendar.
                       </p>
                     </div>
@@ -143,6 +144,19 @@ export function AdminCalendarSyncDialog() {
                         <Copy size={16} />
                       </Button>
                     </div>
+
+                    {isLocalhost && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        className="p-3 rounded-xl bg-red-50 border border-red-100 text-[10px] text-red-700 font-medium leading-relaxed"
+                      >
+                        <p className="font-bold mb-1 flex items-center gap-1.5 text-red-800 uppercase tracking-wider">
+                          <Info size={14} /> Connection Blocked
+                        </p>
+                        Google Calendar cannot see your "localhost". This button will work once you **Deploy** your site. For now, use the **Download** button to import your schedule.
+                      </motion.div>
+                    )}
                   </div>
                 </div>
                 
@@ -177,7 +191,7 @@ export function AdminCalendarSyncDialog() {
                   
                   <Button 
                     asChild
-                    className="w-full h-12 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold gap-2 shadow-lg shadow-black/10"
+                    className="w-full h-11 sm:h-12 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold gap-2 shadow-lg shadow-black/10"
                   >
                     <a href={appleCalendarUrl}>
                       <ExternalLink size={18} />
