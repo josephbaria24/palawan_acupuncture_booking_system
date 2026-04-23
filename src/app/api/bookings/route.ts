@@ -39,6 +39,12 @@ export async function POST(req: NextRequest) {
 
     // Return the original (unencrypted) data back to the patient for immediate confirmation view
     // The database now strictly holds the encrypted versions.
+    // Trigger background sync to Google Calendar (non-blocking)
+    if (newBooking.schedule_id) {
+      syncScheduleToGoogle(newBooking.schedule_id).catch(err => console.error("Auto-Sync failed:", err));
+    }
+
+    // Return the original (unencrypted) data back to the patient for immediate confirmation view
     return NextResponse.json({
       ...newBooking,
       client_name,
@@ -46,13 +52,6 @@ export async function POST(req: NextRequest) {
       email,
       notes
     });
-
-    // Trigger background sync to Google Calendar (non-blocking)
-    if (newBooking.schedule_id) {
-      syncScheduleToGoogle(newBooking.schedule_id).catch(err => console.error("Auto-Sync failed:", err));
-    }
-
-    return response;
   } catch (error: any) {
     console.error("CRITICAL BOOKING ERROR:", error);
     return NextResponse.json({ 
