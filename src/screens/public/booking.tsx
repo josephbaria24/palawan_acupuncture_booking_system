@@ -46,8 +46,7 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
     client_name: "",
     phone: "",
     email: "",
-    notes: "",
-    payment_method: "cash"
+    notes: ""
   });
 
   const [isSuccess, setIsSuccess] = useState(false);
@@ -63,8 +62,6 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
     }
 
     try {
-      const finalNotes = `Payment Method: ${formData.payment_method}\n\n${formData.notes}`.trim();
-
       const confirmedCount = schedule?.bookings?.filter(b => b.status === "confirmed").length || 0;
       const isFull = schedule?.status === 'full' || confirmedCount >= (schedule?.capacity || 0);
 
@@ -77,7 +74,7 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
         client_name: formData.client_name,
         phone: formData.phone,
         email: formData.email,
-        notes: finalNotes,
+        notes: formData.notes,
         schedule_id: id,
         status: isFull ? 'queued' : 'confirmed',
         assigned_by: 'client'
@@ -263,26 +260,6 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
                       </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <label htmlFor="payment" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Payment Method</label>
-                      <Select 
-                        value={formData.payment_method} 
-                        onValueChange={(val) => setFormData({...formData, payment_method: val})}
-                      >
-                        <SelectTrigger id="payment" className="w-full h-12 rounded-xl border-border/50 focus:ring-primary/20">
-                          <div className="flex items-center gap-2">
-                            <CreditCard size={18} className="text-muted-foreground/50" />
-                            <SelectValue placeholder="Select payment method" />
-                          </div>
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl border-border/50">
-                          <SelectItem value="cash" className="rounded-lg py-2">Cash (On-site)</SelectItem>
-                          <SelectItem value="card" className="rounded-lg py-2">Credit/Debit Card</SelectItem>
-                          <SelectItem value="gcash" className="rounded-lg py-2">GCash</SelectItem>
-                          <SelectItem value="bank" className="rounded-lg py-2">Bank Transfer</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
 
                     <div className="space-y-1.5">
                       <label htmlFor="notes" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Notes (Optional)</label>
@@ -373,9 +350,7 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
                     <span className="text-2xl font-display font-black text-foreground">₱{schedule.price}</span>
                   </div>
                   <p className="text-[10px] text-right text-muted-foreground">
-                    {formData.payment_method === 'cash' 
-                      ? 'Payment will be settled on-site.' 
-                      : `Payment via ${formData.payment_method === 'card' ? 'Credit/Debit Card' : formData.payment_method === 'gcash' ? 'GCash' : 'Bank Transfer'}. Instructions will be emailed.`}
+                    Payment will be settled on-site.
                   </p>
                 </div>
 

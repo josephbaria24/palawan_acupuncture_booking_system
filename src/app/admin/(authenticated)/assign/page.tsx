@@ -39,8 +39,7 @@ export default function AdminAssignClient() {
     client_name: "",
     phone: "",
     email: "",
-    schedule_id: "",
-    payment_method: "cash"
+    schedule_id: ""
   });
 
   const [slotSearch, setSlotSearch] = useState("");
@@ -91,7 +90,7 @@ export default function AdminAssignClient() {
         ...formData,
         status: 'confirmed',
         assigned_by: 'admin',
-        notes: `Payment Method: ${formData.payment_method}`
+        notes: ""
       });
       toast.success("Client assigned successfully!");
       router.push("/admin");
@@ -209,25 +208,6 @@ export default function AdminAssignClient() {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-muted-foreground uppercase">Payment Method</label>
-                <div className="relative">
-                  <Select 
-                    value={formData.payment_method}
-                    onValueChange={(val) => setFormData({...formData, payment_method: val})}
-                  >
-                    <SelectTrigger className="h-12 border-border/50 focus:ring-primary/20 pl-9">
-                      <SelectValue placeholder="Select payment method" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl border-border/50">
-                      <SelectItem value="cash" className="font-medium">Cash (Pay on site)</SelectItem>
-                      <SelectItem value="gcash" className="font-medium">GCash</SelectItem>
-                      <SelectItem value="bank" className="font-medium">Bank Transfer</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Wallet size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none z-10" />
-                </div>
-              </div>
             </CardContent>
           </Card>
 
@@ -354,18 +334,6 @@ export default function AdminAssignClient() {
                   className="mt-6 p-4 rounded-2xl bg-secondary/30 border border-secondary/50"
                 >
                   <p className="text-xs font-bold text-primary uppercase tracking-widest mb-3">Selected Session Summary</p>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-white/50 flex items-center justify-center text-primary shadow-sm">
-                        <Calendar size={18} />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase">Date</p>
-                        <p className="text-xs font-bold text-foreground">
-                          {format(new Date(openSchedules.find(s => s.id === formData.schedule_id)?.date || new Date()), 'EEE, MMM dd')}
-                        </p>
-                      </div>
-                    </div>
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-white/50 flex items-center justify-center text-primary shadow-sm">
                         <Clock size={18} />
@@ -379,7 +347,6 @@ export default function AdminAssignClient() {
                         </p>
                       </div>
                     </div>
-                  </div>
                 </motion.div>
               )}
             </CardContent>

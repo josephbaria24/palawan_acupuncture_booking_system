@@ -5,6 +5,7 @@ import { encrypt } from "@/lib/encryption";
 export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
+    console.log("Incoming Booking Data:", data);
     const { client_name, phone, email, notes, ...rest } = data;
 
     if (!supabase) {
@@ -45,9 +46,10 @@ export async function POST(req: NextRequest) {
       notes
     });
   } catch (error: any) {
-    console.error("Booking registration API failed:", error);
+    console.error("CRITICAL BOOKING ERROR:", error);
     return NextResponse.json({ 
-      error: error.message || "Failed to register booking securely." 
+      error: error.message || "Failed to register booking securely.",
+      details: error.stack
     }, { status: 500 });
   }
 }

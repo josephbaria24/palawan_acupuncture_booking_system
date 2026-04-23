@@ -32,10 +32,12 @@ export function AdminCalendarSyncDialog() {
   };
 
   const handleGoogleConnect = () => {
-    // Instead of Supabase OAuth (which might be disabled), 
-    // we use Google's direct "Add by URL" feature.
-    // This prompts the user to pick an account and then asks to subscribe to the feed.
-    const googleAddUrl = `https://www.google.com/calendar/render?cid=${encodeURIComponent(feedUrl)}`;
+    // Generate a clean webcal URL
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+    const cleanUrl = `${baseUrl}/api/calendar?admin=true`.replace(/^https?:\/\//, "webcal://");
+    
+    // We only encode once. Google Calendar's render engine will handle the rest.
+    const googleAddUrl = `https://www.google.com/calendar/render?cid=${encodeURIComponent(cleanUrl)}`;
     window.open(googleAddUrl, '_blank');
   };
 

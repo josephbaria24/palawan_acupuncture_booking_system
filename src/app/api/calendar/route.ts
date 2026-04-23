@@ -7,6 +7,9 @@ export async function GET(request: NextRequest) {
     // Extract params
     const email = request.nextUrl.searchParams.get("email");
     const isAdmin = request.nextUrl.searchParams.get("admin") === "true";
+    const userAgent = request.headers.get("user-agent") || "Unknown";
+
+    console.log(`Calendar Feed Request: Admin=${isAdmin}, Email=${email}, UA=${userAgent}`);
 
     if (!email && !isAdmin) {
       return new NextResponse("Email or Admin required", { status: 400 });
