@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { generateIcsFile } from "@/utils/calendar";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { email: string } }
-) {
+export async function GET(request: NextRequest) {
   // Extract params
   const email = request.nextUrl.searchParams.get("email");
   const isAdmin = request.nextUrl.searchParams.get("admin") === "true";
