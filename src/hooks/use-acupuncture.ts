@@ -246,3 +246,20 @@ export function useAllBookings() {
     }
   });
 }
+
+export function useCalendarSettings() {
+  return useQuery({
+    queryKey: ['calendar-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('calendar_sync_settings')
+        .select('*')
+        .eq('id', '00000000-0000-0000-0000-000000000001')
+        .single();
+      
+      if (error && error.code !== 'PGRST116') return null;
+      if (error) throw error;
+      return data;
+    }
+  });
+}

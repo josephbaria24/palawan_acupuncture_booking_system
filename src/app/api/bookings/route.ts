@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { encrypt } from "@/lib/encryption";
+import { syncScheduleToGoogle } from "@/lib/google-calendar";
 
 export async function POST(req: NextRequest) {
   try {
@@ -45,6 +46,13 @@ export async function POST(req: NextRequest) {
       email,
       notes
     });
+
+    // Trigger background sync to Google Calendar (non-blocking)
+    if (newBooking.schedule_id) {
+      syncScheduleToGoogle(newBooking.schedule_id).catch(err => console.error("Auto-Sync failed:", err));
+    }
+
+    return response;
   } catch (error: any) {
     console.error("CRITICAL BOOKING ERROR:", error);
     return NextResponse.json({ 

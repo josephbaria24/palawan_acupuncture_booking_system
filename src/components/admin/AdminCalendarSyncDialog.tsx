@@ -18,9 +18,11 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { useCalendarSettings } from "@/hooks/use-acupuncture";
 
 export function AdminCalendarSyncDialog() {
   const [activeTab, setActiveTab] = useState<"google" | "apple">("google");
+  const { data: settings, isLoading: isSettingsLoading } = useCalendarSettings();
   const isLocalhost = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 
   const feedUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/api/calendar?admin=true`;
@@ -31,10 +33,15 @@ export function AdminCalendarSyncDialog() {
     toast.success("Clinic Calendar URL copied!");
   };
 
+  const handleRealTimeConnect = () => {
+    window.location.href = "/api/auth/google/login";
+  };
+
   const handleGoogleConnect = () => {
-    // Generate a clean webcal URL
+    // Generate a clean webcal URL with a cache-buster timestamp
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-    const cleanUrl = `${baseUrl}/api/calendar?admin=true`.replace(/^https?:\/\//, "webcal://");
+    const timestamp = new Date().getTime();
+    const cleanUrl = `${baseUrl}/api/calendar?admin=true&t=${timestamp}`.replace(/^https?:\/\//, "webcal://");
     
     // We only encode once. Google Calendar's render engine will handle the rest.
     const googleAddUrl = `https://www.google.com/calendar/render?cid=${encodeURIComponent(cleanUrl)}`;
@@ -98,12 +105,47 @@ export function AdminCalendarSyncDialog() {
                     <div className="space-y-1">
                       <p className="font-bold text-sm sm:text-base">Direct Account Sync</p>
                       <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed font-medium">
-                        Securely connect your Google account to automatically push clinic schedules to your primary calendar.
+                        Automatically push clinic schedules to your primary Google Calendar in real-time.
                       </p>
                     </div>
                   </div>
                   
                   <div className="space-y-3 pt-2">
+                    {settings?.google_refresh_token ? (
+                      <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="size-8 rounded-full bg-emerald-500 text-white flex items-center justify-center">
+                            <Check size={16} />
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Sync Active</p>
+                            <p className="text-[10px] text-emerald-600 font-medium">Instantly pushing all slots</p>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="h-8 text-xs font-bold text-emerald-700 hover:bg-emerald-100"
+                          onClick={handleRealTimeConnect}
+                        >
+                          Reconnect
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button 
+                        onClick={handleRealTimeConnect}
+                        className="w-full h-12 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold gap-2 shadow-lg shadow-primary/20"
+                      >
+                        <ExternalLink size={18} />
+                        Connect Real-Time Sync
+                      </Button>
+                    )}
+
+                    <div className="flex items-center gap-3 py-2">
+                      <div className="h-px bg-border flex-1" />
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center">or use read-only feed</span>
+                      <div className="h-px bg-border flex-1" />
+                    </div>
                     <div className="grid grid-cols-2 gap-2">
                       <Button 
                         onClick={handleGoogleConnect}
