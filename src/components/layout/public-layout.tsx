@@ -296,7 +296,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
 
           <div className="pt-12 border-t border-border/50 flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden">
             <p className="text-[11px] text-muted-foreground font-medium tracking-tight">
-              © {new Date().getFullYear()} Palawan Acupuncture Clinic. All rights reserved. Registered Practitioner.
+              © {new Date().getFullYear()} Palawan Acupuncture Clinic. All rights reserved. PITAHC Certified Practitioner.
             </p>
 
             <div className="flex items-center gap-3 backdrop-blur-sm bg-white/40 py-2 px-4 rounded-2xl border border-white/60 shadow-sm">

@@ -117,7 +117,7 @@ export default function LandingScreen() {
                       Same-day booking available
                     </span>
                     <span className="inline-flex items-center py-2 px-4 rounded-full bg-white/15 backdrop-blur-xl text-white/90 font-semibold text-xs border border-white/20 shadow-sm">
-                      Licensed practitioners
+                      PITAHC Certified Practitioner
                     </span>
                   </div>
                 </div>
@@ -213,12 +213,12 @@ export default function LandingScreen() {
                   </p>
 
                   <div className="mt-6 flex items-center gap-2">
-                    <span className="inline-flex items-center justify-center size-9 rounded-2xl bg-emerald-500/15 text-emerald-700 border border-emerald-500/20">
+                    {/* <span className="inline-flex items-center justify-center size-9 rounded-2xl bg-emerald-500/15 text-emerald-700 border border-emerald-500/20">
                       <Leaf className="size-4" />
-                    </span>
-                    <span className="text-sm font-semibold text-foreground">
+                    </span> */}
+                    {/* <span className="text-sm font-semibold text-foreground">
                       Acupuncture care
-                    </span>
+                    </span> */}
                   </div>
                 </div>
               </motion.div>
@@ -271,7 +271,7 @@ export default function LandingScreen() {
               <p className="text-muted-foreground text-base lg:text-lg leading-relaxed">
                 While acupuncture can help with symptoms, our goal is deeper:
                 address the root cause so you can feel better and stay balanced.
-                Our licensed practitioners combine traditional techniques with
+                Our PITAHC Certified Practitioner combine traditional techniques with
                 modern booking for a calm, supportive experience.
               </p>
 

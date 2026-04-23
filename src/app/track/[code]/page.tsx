@@ -24,8 +24,10 @@ import {
   ShieldCheck,
   Search,
   Download,
-  Share2
+  Share2,
+  CalendarCheck
 } from "lucide-react";
+import { CalendarSyncCard } from "@/components/calendar/CalendarSyncCard";
 
 export default function TrackResultPage() {
   const params = useParams();
@@ -220,67 +222,6 @@ export default function TrackResultPage() {
                 </div>
               </div>
 
-              {isConfirmed && (
-                <div className="space-y-3 pt-2">
-                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Set Appointment Reminder</p>
-                  <div className="flex flex-wrap gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="flex-1 rounded-xl h-10 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all font-bold text-[10px] flex items-center gap-2"
-                      onClick={() => {
-                        const date = new Date(schedule.date);
-                        const [sh, sm] = (schedule.start_time || "08:00").split(':');
-                        const [eh, em] = (schedule.end_time || "08:30").split(':');
-                        
-                        const start = new Date(date);
-                        start.setHours(parseInt(sh), parseInt(sm), 0, 0);
-                        
-                        const end = new Date(date);
-                        end.setHours(parseInt(eh), parseInt(em), 0, 0);
-
-                        const googleUrl = generateGoogleCalendarUrl({
-                          title: `Acupuncture Session: ${schedule.title}`,
-                          description: `Your acupuncture appointment (Ref: ${code}). Please arrive 15 minutes before your slot.`,
-                          location: schedule.location || "Palawan Clinic",
-                          startTime: start.toISOString(),
-                          endTime: end.toISOString()
-                        });
-                        window.open(googleUrl, '_blank');
-                      }}
-                    >
-                      <Share2 size={14} /> Google
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="flex-1 rounded-xl h-10 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all font-bold text-[10px] flex items-center gap-2"
-                      onClick={() => {
-                        const date = new Date(schedule.date);
-                        const [sh, sm] = (schedule.start_time || "08:00").split(':');
-                        const [eh, em] = (schedule.end_time || "08:30").split(':');
-                        
-                        const start = new Date(date);
-                        start.setHours(parseInt(sh), parseInt(sm), 0, 0);
-                        
-                        const end = new Date(date);
-                        end.setHours(parseInt(eh), parseInt(em), 0, 0);
-
-                        downloadIcsFile({
-                          title: `Acupuncture Session: ${schedule.title}`,
-                          description: `Your acupuncture appointment (Ref: ${code}). Please arrive 15 minutes before your slot.`,
-                          location: schedule.location || "Palawan Clinic",
-                          startTime: start.toISOString(),
-                          endTime: end.toISOString()
-                        });
-                        toast.success("Calendar dynamic event file downloaded!");
-                      }}
-                    >
-                      <Download size={14} /> iCal / Outlook
-                    </Button>
-                  </div>
-                </div>
-              )}
             </div>
           </motion.div>
 
@@ -313,6 +254,15 @@ export default function TrackResultPage() {
           </motion.div>
 
         </div>
+
+        {/* Calendar Sync Section */}
+        {isConfirmed && (
+          <CalendarSyncCard 
+            email={booking.email} 
+            referenceCode={code}
+            isConfirmed={isConfirmed} 
+          />
+        )}
 
         {/* Footer help */}
         <div className="text-center pt-8 border-t border-border/20">

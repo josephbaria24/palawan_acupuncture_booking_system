@@ -20,6 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
 import { formatTime12h } from "@/utils/time";
+import { AdminCalendarSyncDialog } from "@/components/admin/AdminCalendarSyncDialog";
 
 export default function AdminSchedules() {
   const { data: schedules, isLoading } = useSchedules();
@@ -185,12 +186,15 @@ export default function AdminSchedules() {
           <p className="text-muted-foreground mt-1 text-sm font-medium">Manage your clinic's availability.</p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-[#593f31] hover:bg-[#593f31]/90 text-white rounded-xl shadow-lg border-none px-6">
-              <Plus size={18} className="mr-2" /> New Schedule
-            </Button>
-          </DialogTrigger>
+        <div className="flex items-center gap-3">
+          <AdminCalendarSyncDialog />
+          
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-[#593f31] hover:bg-[#593f31]/90 text-white rounded-xl shadow-lg border-none px-6">
+                <Plus size={18} className="mr-2" /> New Schedule
+              </Button>
+            </DialogTrigger>
           <DialogContent className="w-[95vw] sm:max-w-[425px] rounded-3xl p-6 max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="text-xl font-bold">Add New Schedule</DialogTitle>
@@ -404,6 +408,7 @@ export default function AdminSchedules() {
             </div>
           </DialogContent>
         </Dialog>
+      </div>
       </div>
 
       {/* Filters and Search */}

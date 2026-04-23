@@ -15,8 +15,10 @@ import {
   CreditCard,
   Download,
   Share2,
-  MapPin
+  MapPin,
+  CalendarCheck
 } from "lucide-react";
+import { CalendarSyncCard } from "@/components/calendar/CalendarSyncCard";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -163,63 +165,12 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
             </div>
 
             {bookingStatus === 'confirmed' && (
-              <div className="mb-8 space-y-3">
-                <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Add to your calendar</p>
-                <div className="flex flex-wrap justify-center gap-3">
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="rounded-xl h-11 px-6 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all font-bold text-xs flex items-center gap-2"
-                    onClick={() => {
-                        const date = new Date(schedule.date);
-                        const [sh, sm] = (schedule.start_time || "08:00").split(':');
-                        const [eh, em] = (schedule.end_time || "08:30").split(':');
-                        
-                        const start = new Date(date);
-                        start.setHours(parseInt(sh), parseInt(sm), 0, 0);
-                        
-                        const end = new Date(date);
-                        end.setHours(parseInt(eh), parseInt(em), 0, 0);
-
-                        const googleUrl = generateGoogleCalendarUrl({
-                          title: `Acupuncture Session: ${schedule.title}`,
-                          description: `Your acupuncture appointment (Ref: ${bookingRef}). Please arrive 15 minutes before your slot.`,
-                          location: schedule.location || "Palawan Clinic",
-                          startTime: start.toISOString(),
-                          endTime: end.toISOString()
-                        });
-                      window.open(googleUrl, '_blank');
-                    }}
-                  >
-                    <Share2 size={16} /> Google Calendar
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    className="rounded-xl h-11 px-6 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all font-bold text-xs flex items-center gap-2"
-                    onClick={() => {
-                        const date = new Date(schedule.date);
-                        const [sh, sm] = (schedule.start_time || "08:00").split(':');
-                        const [eh, em] = (schedule.end_time || "08:30").split(':');
-                        
-                        const start = new Date(date);
-                        start.setHours(parseInt(sh), parseInt(sm), 0, 0);
-                        
-                        const end = new Date(date);
-                        end.setHours(parseInt(eh), parseInt(em), 0, 0);
-
-                        downloadIcsFile({
-                          title: `Acupuncture Session: ${schedule.title}`,
-                          description: `Your acupuncture appointment (Ref: ${bookingRef}). Please arrive 15 minutes before your slot.`,
-                          location: schedule.location || "Palawan Clinic",
-                          startTime: start.toISOString(),
-                          endTime: end.toISOString()
-                        });
-                    }}
-                  >
-                    <Download size={16} /> Device Calendar (.ics)
-                  </Button>
-                </div>
+              <div className="mb-8 text-left">
+                <CalendarSyncCard 
+                  email={formData.email} 
+                  referenceCode={bookingRef}
+                  isConfirmed={bookingStatus === 'confirmed'} 
+                />
               </div>
             )}
 

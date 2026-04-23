@@ -201,64 +201,7 @@ export default function ScheduleDetailsPage() {
               </div>
             </div>
 
-            <div className="pt-6 border-t border-border/40">
-              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-4">Admin Reminders</p>
-              <div className="grid grid-cols-2 gap-3">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="rounded-xl h-10 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all font-bold text-[10px] flex items-center gap-2"
-                  onClick={() => {
-                    const date = new Date(schedule.date);
-                    const [sh, sm] = (schedule.start_time || "08:00").split(':');
-                    const [eh, em] = (schedule.end_time || "08:30").split(':');
-                    
-                    const start = new Date(date);
-                    start.setHours(parseInt(sh), parseInt(sm), 0, 0);
-                    
-                    const end = new Date(date);
-                    end.setHours(parseInt(eh), parseInt(em), 0, 0);
 
-                    const googleUrl = generateGoogleCalendarUrl({
-                      title: `ADMIN: ${schedule.title} (${occupiedCount}/${schedule.capacity} Booked)`,
-                      description: `Palawan Acupuncture Session\nTotal booked: ${occupiedCount} users.\nhttps://palawan_acupuncture_booking_system.vercel.app/admin/schedules/${id}`,
-                      location: "Palawan Clinic",
-                      startTime: start.toISOString(),
-                      endTime: end.toISOString()
-                    });
-                    window.open(googleUrl, '_blank');
-                  }}
-                >
-                  <Share2 size={14} /> G-Calendar
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="rounded-xl h-10 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all font-bold text-[10px] flex items-center gap-2"
-                  onClick={() => {
-                    const date = new Date(schedule.date);
-                    const [sh, sm] = (schedule.start_time || "08:00").split(':');
-                    const [eh, em] = (schedule.end_time || "08:30").split(':');
-                    
-                    const start = new Date(date);
-                    start.setHours(parseInt(sh), parseInt(sm), 0, 0);
-                    
-                    const end = new Date(date);
-                    end.setHours(parseInt(eh), parseInt(em), 0, 0);
-
-                    downloadIcsFile({
-                      title: `ADMIN: ${schedule.title} (${occupiedCount}/${schedule.capacity} Booked)`,
-                      description: `Palawan Acupuncture Session\nTotal booked: ${occupiedCount} users.\nhttps://palawan_acupuncture_booking_system.vercel.app/admin/schedules/${id}`,
-                      location: "Palawan Clinic",
-                      startTime: start.toISOString(),
-                      endTime: end.toISOString()
-                    });
-                  }}
-                >
-                  <Download size={14} /> Device Sync
-                </Button>
-              </div>
-            </div>
           </div>
 
           <Button 
