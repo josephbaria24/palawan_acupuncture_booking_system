@@ -16,29 +16,28 @@ export async function GET(request: NextRequest) {
       `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/auth/google/callback`
     );
 
+    console.log("Exchanging code for tokens...");
     const { tokens } = await oauth2Client.getToken(code);
+    console.log("Tokens received:", tokens.refresh_token ? "Refresh token present" : "No refresh token!");
     
-    if (!tokens.refresh_token) {
-      // If no refresh token, it might be because the user already authorized.
-      // We should ideally tell them to disconnect and reconnect, or use prompt: 'consent' in login.
-      // But we added prompt: 'consent' so we should always get it.
-    }
-
     if (supabaseAdmin && tokens.refresh_token) {
-      // Upsert the sync settings (we only support one main clinic calendar for now)
+      console.log("Upserting to Supabase...");
       const { error } = await supabaseAdmin
         .from('calendar_sync_settings')
         .upsert({
-          id: '00000000-0000-0000-0000-000000000001', // Static ID for the clinic's master settings
+          id: '00000000-0000-0000-0000-000000000001',
           google_refresh_token: tokens.refresh_token,
           is_enabled: true,
           updated_at: new Date().toISOString()
         });
 
       if (error) {
-        console.error("Failed to save refresh token:", error);
-        return NextResponse.json({ error: 'Failed to save sync settings' }, { status: 500 });
+        console.error("SUPABASE DB ERROR:", error);
+        return NextResponse.json({ error: 'Database error', details: error }, { status: 500 });
       }
+      console.log("Sync settings saved successfully!");
+    } else {
+      console.error("FAILED: supabaseAdmin is", !!supabaseAdmin, "Refresh token is", !!tokens.refresh_token);
     }
 
     // Redirect back to admin dashboard with success

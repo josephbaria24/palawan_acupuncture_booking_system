@@ -57,10 +57,10 @@ export function AdminCalendarSyncDialog() {
         </Button>
       </DialogTrigger>
       <DialogContent className="w-[95vw] sm:max-w-[500px] rounded-[1.5rem] sm:rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl">
-        <div className="bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-5 sm:p-10">
-          <DialogHeader className="mb-6 sm:mb-8">
+        <div className="bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-5 sm:p-10 max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="mb-4 sm:mb-8">
             <DialogTitle className="text-xl sm:text-2xl font-display font-black tracking-tight">Clinic Schedule Sync</DialogTitle>
-            <p className="text-muted-foreground text-xs sm:text-sm font-medium">Sync all clinic sessions to your personal or staff calendar.</p>
+            <p className="text-muted-foreground text-[10px] sm:text-sm font-medium">Sync all clinic sessions to your personal or staff calendar.</p>
           </DialogHeader>
 
           <div className="flex bg-secondary/30 p-1 rounded-2xl w-full border border-secondary/40 mb-6 sm:mb-8">
@@ -103,8 +103,8 @@ export function AdminCalendarSyncDialog() {
                       </svg>
                     </div>
                     <div className="space-y-1">
-                      <p className="font-bold text-sm sm:text-base">Direct Account Sync</p>
-                      <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed font-medium">
+                      <p className="font-bold text-sm">Direct Account Sync</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground leading-relaxed font-medium">
                         Automatically push clinic schedules to your primary Google Calendar in real-time.
                       </p>
                     </div>
@@ -141,9 +141,9 @@ export function AdminCalendarSyncDialog() {
                       </Button>
                     )}
 
-                    <div className="flex items-center gap-3 py-2">
+                    <div className="flex items-center gap-3 py-4">
                       <div className="h-px bg-border flex-1" />
-                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center">or use read-only feed</span>
+                      <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center">or use read-only feed</span>
                       <div className="h-px bg-border flex-1" />
                     </div>
                     <div className="grid grid-cols-2 gap-2">
@@ -169,9 +169,9 @@ export function AdminCalendarSyncDialog() {
                       </Button>
                     </div>
 
-                    <div className="flex items-center gap-3 py-2">
+                    <div className="flex items-center gap-3 py-4">
                       <div className="h-px bg-border flex-1" />
-                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">or use manual URL</span>
+                      <span className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-widest">or use manual URL</span>
                       <div className="h-px bg-border flex-1" />
                     </div>
 
