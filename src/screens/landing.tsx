@@ -1,8 +1,10 @@
+import React from "react";
 import { PublicLayout } from "@/components/layout/public-layout";
 import Link from "next/link";
 import { ArrowRight, Leaf, Clock, Star } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import CardSwap, { Card } from "@/components/ui/card-swap";
 
 const benefits = [
   {
@@ -37,6 +39,8 @@ const benefits = [
 
 export default function LandingScreen() {
   const heroRef = useRef<HTMLElement | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  
   const { scrollYProgress } = useScroll({
     target: heroRef,
     offset: ["start start", "end start"],
@@ -44,15 +48,21 @@ export default function LandingScreen() {
   const heroImageScale = useTransform(scrollYProgress, [0, 1], [1, 1.28]);
 
   useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    
     const hash = window.location.hash?.replace(/^#/, "");
-    if (!hash) return;
+    if (hash) {
+      const el = document.getElementById(hash);
+      if (el) {
+        requestAnimationFrame(() => {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      }
+    }
 
-    const el = document.getElementById(hash);
-    if (!el) return;
-
-    requestAnimationFrame(() => {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   return (
@@ -104,12 +114,6 @@ export default function LandingScreen() {
                     >
                       Book Appointment <ArrowRight size={18} />
                     </Link>
-                    {/* <Link
-                      href="/admin"
-                      className="px-6 py-3.5 lg:px-8 lg:py-4 rounded-2xl bg-white/15 backdrop-blur-xl border border-white/25 text-white font-semibold text-base lg:text-lg hover:bg-white/20 transition-all duration-300 flex items-center justify-center"
-                    >
-                      Staff Portal
-                    </Link> */}
                   </div>
 
                   <div className="mt-7 flex flex-wrap items-center justify-center gap-2">
@@ -121,8 +125,6 @@ export default function LandingScreen() {
                     </span>
                   </div>
                 </div>
-
-                {/* Rating moved to bottom curve */}
               </div>
             </div>
 
@@ -170,59 +172,92 @@ export default function LandingScreen() {
         <div className="absolute inset-0 bg-primary/5 -skew-y-6 origin-right transform translate-y-32" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center max-w-3xl mx-auto mb-12 lg:mb-18">
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-foreground mb-4"
-            >
-              Begin Your Journey to Better Health
-            </motion.h2>
-            <p className="text-base lg:text-lg text-muted-foreground">
-              Your treatment is designed to improve how you feel today and
-              support long-term balance.
-            </p>
-          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 lg:gap-7">
-            {benefits.map((benefit, index) => (
+            {/* Left: Content */}
+            <div className="text-center lg:text-left max-w-2xl lg:max-w-xl mx-auto lg:mx-0">
+              <motion.h2
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="text-3xl md:text-5xl lg:text-6xl font-display font-bold text-foreground mb-6 leading-[1.1]"
+              >
+                Begin Your Journey to Better Health
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1 }}
+                className="text-base md:text-lg lg:text-xl text-muted-foreground leading-relaxed"
+              >
+                Your treatment is designed to improve how you feel today and
+                support long-term balance. Experience the healing power of traditional acupuncture.
+              </motion.p>
+
               <motion.div
-                key={benefit.title}
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.08, duration: 0.5 }}
-                whileHover={{ y: -8 }}
-                className="group relative bg-card border border-border rounded-[1.75rem] overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-primary/10 transition-all duration-300"
+                transition={{ delay: 0.2 }}
+                className="mt-10 flex items-center justify-center lg:justify-start gap-4"
               >
-                <div className="p-5">
-                  <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-background border border-border/70">
-                    <img
-                      src={`/images/${benefit.image}`}
-                      alt={benefit.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-
-                  <h3 className="mt-5 text-lg lg:text-xl font-bold text-foreground group-hover:text-primary transition-colors">
-                    {benefit.title}
-                  </h3>
-                  <p className="mt-2 text-muted-foreground leading-relaxed text-sm lg:text-base">
-                    {benefit.description}
-                  </p>
-
-                  <div className="mt-6 flex items-center gap-2">
-                    {/* <span className="inline-flex items-center justify-center size-9 rounded-2xl bg-emerald-500/15 text-emerald-700 border border-emerald-500/20">
-                      <Leaf className="size-4" />
-                    </span> */}
-                    {/* <span className="text-sm font-semibold text-foreground">
-                      Acupuncture care
-                    </span> */}
-                  </div>
-                </div>
+                <span className="text-sm font-bold text-primary uppercase tracking-widest bg-primary/10 px-4 py-2 rounded-full border border-primary/20">
+                  Trusted Care
+                </span>
+                <span className="text-sm font-medium text-muted-foreground italic">
+                  PITAHC Certified
+                </span>
               </motion.div>
-            ))}
+            </div>
+
+            {/* Right: Interactive Stack */}
+            <div className="relative flex justify-center lg:justify-end min-h-[450px] sm:min-h-[500px] lg:min-h-[700px] w-full sm:overflow-visible">
+              <div className="relative w-full h-full flex items-center justify-center lg:justify-end lg:pr-12 mt-12 sm:mt-0">
+                <CardSwap
+                  width={isMobile ? "min(80vw, 290px)" : 420}
+                  height={isMobile ? "min(110vw, 420px)" : 580}
+                  cardDistance={isMobile ? 25 : 45}
+                  verticalDistance={isMobile ? 35 : 55}
+                  delay={4500}
+                >
+                  {benefits.map((benefit, index) => (
+                    <Card
+                      key={benefit.title}
+                      customClass="bg-card border-border shadow-2xl !p-0 overflow-hidden !rounded-[2rem] sm:!rounded-[2.5rem]"
+                    >
+                      <div className="flex flex-col h-full p-5 sm:p-8">
+                        <div className="aspect-[4/3] rounded-2xl sm:rounded-3xl overflow-hidden bg-background border border-border/70 mb-4 sm:mb-6 shrink-0">
+                          <img
+                            src={`/images/${benefit.image}`}
+                            alt={benefit.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+
+                        <div className="flex-1">
+                          <h3 className="text-lg sm:text-2xl font-bold text-foreground mb-2 sm:mb-3 leading-tight">
+                            {benefit.title}
+                          </h3>
+                          <p className="text-xs sm:text-base text-muted-foreground leading-relaxed line-clamp-3 sm:line-clamp-none">
+                            {benefit.description}
+                          </p>
+                        </div>
+
+                        <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-border/40 flex items-center justify-between">
+                          <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] text-primary/50">
+                            Palawan Acupuncture
+                          </span>
+                          <div className="size-6 sm:size-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                            <Leaf size={12} />
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </CardSwap>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -247,16 +282,6 @@ export default function LandingScreen() {
                   alt="Expert acupuncture care"
                   className="w-full h-auto block"
                 />
-              </div>
-
-              <div className="absolute -bottom-8 -right-4 md:-right-10 md:bottom-0 lg:-bottom-6 lg:-right-6">
-                <div className="rounded-[1.75rem] overflow-hidden border border-border/70 bg-background shadow-xl shadow-black/10 w-[260px] max-w-[70vw]">
-                  <img
-                    src={`/images/${benefits[2]?.image ?? "stomach.png"}`}
-                    alt="Holistic support"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
               </div>
 
               <div className="absolute -top-5 -left-4 rounded-2xl bg-white/70 backdrop-blur-xl border border-white/50 px-4 py-3 shadow-sm hidden sm:block">
@@ -330,4 +355,3 @@ export default function LandingScreen() {
     </PublicLayout>
   );
 }
-

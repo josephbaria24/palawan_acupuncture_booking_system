@@ -13,7 +13,8 @@ export type AuditAction =
   | 'UPDATE_SCHEDULE'
   | 'DELETE_SCHEDULE'
   | 'NEW_BOOKING'
-  | 'WAITLIST_PROMOTION';
+  | 'WAITLIST_PROMOTION'
+  | 'RESCHEDULE_BOOKING';
 
 export interface AuditLog {
   id: string;

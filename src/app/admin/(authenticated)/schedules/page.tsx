@@ -3,7 +3,7 @@
 import { useSchedules, useCreateSchedule, useClinicLocations, useCreateClinicLocation } from "@/hooks/use-acupuncture";
 import { useAuditLog } from "@/hooks/use-audit";
 import { format, parseISO, eachDayOfInterval } from "date-fns";
-import { Plus, Search, Calendar as CalendarIcon, Clock, Users, Filter, ChevronDown, ChevronRight, CalendarDays, MapPin, Check, ChevronsUpDown, Save } from "lucide-react";
+import { Plus, Search, Calendar as CalendarIcon, Clock, Users, Filter, ChevronDown, ChevronRight, CalendarDays, MapPin, Check, ChevronsUpDown, Save, List } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -114,6 +114,7 @@ export default function AdminSchedules() {
   const [expandedMonths, setExpandedMonths] = useState<string[]>([format(new Date(), 'MMMM yyyy')]);
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortOrder, setSortOrder] = useState("asc");
+  const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
 
   // Auto-fill location from the most recent schedule when opening the dialog
   useEffect(() => {
@@ -498,14 +499,93 @@ export default function AdminSchedules() {
               <SelectItem value="desc" className="font-bold">Latest First</SelectItem>
             </SelectContent>
           </Select>
+
+          <div className="flex items-center bg-white border border-border/40 rounded-2xl p-1 shadow-sm">
+            <button
+              onClick={() => setViewMode("calendar")}
+              className={`h-10 px-3 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors ${
+                viewMode === "calendar"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-secondary/50"
+              }`}
+            >
+              <CalendarDays size={14} />
+              Calendar
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`h-10 px-3 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors ${
+                viewMode === "list"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-secondary/50"
+              }`}
+            >
+              <List size={14} />
+              List
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Calendar View */}
+      {/* Schedule Views */}
       {isLoading ? (
         <div className="p-12 text-center text-muted-foreground font-medium">Loading schedules...</div>
-      ) : (
+      ) : viewMode === "calendar" ? (
         <ScheduleCalendar schedules={filteredSchedules || []} isLoading={isLoading} />
+      ) : (
+        <div className="rounded-2xl border border-border/40 bg-white shadow-sm overflow-hidden">
+          <div className="hidden md:grid md:grid-cols-12 gap-4 px-5 py-3 bg-secondary/20 border-b border-border/40 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            <div className="col-span-3">Month</div>
+            <div className="col-span-2">Day</div>
+            <div className="col-span-3">Time</div>
+            <div className="col-span-2">Slots</div>
+            <div className="col-span-2">Status</div>
+          </div>
+
+          {(filteredSchedules || []).map((schedule) => {
+            const occupiedCount = schedule.bookings?.filter((b) => b.status === "confirmed").length || 0;
+            const isFull = occupiedCount >= schedule.capacity || schedule.status === "full";
+            const virtualStatus = isFull ? "full" : schedule.status;
+
+            return (
+              <Link
+                key={schedule.id}
+                href={`/admin/schedules/${schedule.id}`}
+                className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 px-5 py-4 border-b border-border/40 last:border-b-0 hover:bg-secondary/10 transition-colors"
+              >
+                <div className="md:col-span-3 text-sm font-semibold">
+                  {format(new Date(schedule.date), "MMMM yyyy")}
+                </div>
+                <div className="md:col-span-2 text-sm">
+                  {format(new Date(schedule.date), "EEE, dd")}
+                </div>
+                <div className="md:col-span-3 text-sm">
+                  {formatTime12h(schedule.start_time)} - {formatTime12h(schedule.end_time)}
+                </div>
+                <div className="md:col-span-2 text-sm font-medium">
+                  {occupiedCount}/{schedule.capacity}
+                </div>
+                <div className="md:col-span-2">
+                  <span
+                    className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${
+                      virtualStatus === "full"
+                        ? "bg-red-100 text-red-700"
+                        : virtualStatus === "closed"
+                        ? "bg-gray-100 text-gray-700"
+                        : "bg-emerald-100 text-emerald-700"
+                    }`}
+                  >
+                    {virtualStatus}
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
+
+          {(filteredSchedules || []).length === 0 && (
+            <div className="p-12 text-center text-muted-foreground font-medium">No schedules found.</div>
+          )}
+        </div>
       )}
     </div>
   );

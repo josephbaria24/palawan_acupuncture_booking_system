@@ -12,9 +12,14 @@ import { motion, AnimatePresence } from "framer-motion";
 interface ScheduleCalendarProps {
   schedules: ScheduleWithBookings[];
   isLoading?: boolean;
+  scheduleLinkBasePath?: string;
 }
 
-export function ScheduleCalendar({ schedules, isLoading }: ScheduleCalendarProps) {
+export function ScheduleCalendar({
+  schedules,
+  isLoading,
+  scheduleLinkBasePath = "/admin/schedules",
+}: ScheduleCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
 
@@ -167,7 +172,7 @@ export function ScheduleCalendar({ schedules, isLoading }: ScheduleCalendarProps
                     return (
                       <Link
                         key={schedule.id}
-                        href={`/admin/schedules/${schedule.id}`}
+                        href={`${scheduleLinkBasePath}/${schedule.id}`}
                         className="block group"
                       >
                         <div className={`rounded-xl p-3 border ${getStatusColor(schedule)} transition-all hover:shadow-md`}>

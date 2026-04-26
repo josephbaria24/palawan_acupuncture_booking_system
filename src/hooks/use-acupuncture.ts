@@ -204,6 +204,28 @@ export function useUpdateBookingStatus() {
   });
 }
 
+export function useRescheduleBooking() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ bookingId, newScheduleId }: { bookingId: string, newScheduleId: string }) => {
+      const { data, error } = await supabase
+        .from('bookings')
+        .update({ schedule_id: newScheduleId, status: 'confirmed' })
+        .eq('id', bookingId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data as Booking;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['schedules'] });
+      queryClient.invalidateQueries({ queryKey: ['schedule'] });
+    }
+  });
+}
+
 export function useBookingByReference(referenceCode: string) {
   return useQuery({
     queryKey: ['booking', 'reference', referenceCode],

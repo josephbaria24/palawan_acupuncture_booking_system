@@ -1,12 +1,13 @@
 "use client";
 
-import { useSchedule, useBookings, useDeleteSchedule, useUpdateBookingStatus, useUpdateSchedule } from "@/hooks/use-acupuncture";
+import { useSchedule, useSchedules, useBookings, useDeleteSchedule, useUpdateBookingStatus, useUpdateSchedule, useRescheduleBooking } from "@/hooks/use-acupuncture";
 import { useAuditLog } from "@/hooks/use-audit";
 import { format } from "date-fns";
-import { ArrowLeft, X, UserPlus, HelpCircle, Loader2, Calendar as CalendarIcon, Download, Share2, UserX, Ban, MapPin } from "lucide-react";
+import { ArrowLeft, X, UserPlus, HelpCircle, Loader2, Calendar as CalendarIcon, Download, Share2, UserX, Ban, MapPin, RefreshCw, Clock, Users, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useEffect, useState, useRef } from "react";
 import QRCode from "react-qr-code";
 import { toPng } from "html-to-image";
@@ -31,14 +32,18 @@ export default function ScheduleDetailsPage() {
 
   const { data: schedule, isLoading: isScheduleLoading } = useSchedule(id);
   const { data: bookings, isLoading: isBookingsLoading } = useBookings(id);
+  const { data: allSchedules } = useSchedules();
   const deleteSchedule = useDeleteSchedule();
   const updateBookingStatus = useUpdateBookingStatus();
   const updateSchedule = useUpdateSchedule();
+  const rescheduleBooking = useRescheduleBooking();
   const { logAction } = useAuditLog();
 
   const [origin, setOrigin] = useState("");
   const [copied, setCopied] = useState(false);
   const qrCardRef = useRef<HTMLDivElement>(null);
+  const [rescheduleBookingId, setRescheduleBookingId] = useState<string | null>(null);
+  const [rescheduleDialogOpen, setRescheduleDialogOpen] = useState(false);
 
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -313,6 +318,15 @@ export default function ScheduleDetailsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="rounded-xl border-border/40 shadow-xl">
                             <DropdownMenuItem 
+                              className="gap-2 font-bold text-xs py-2.5 cursor-pointer text-primary focus:text-primary/80 focus:bg-primary/5"
+                              onClick={() => {
+                                setRescheduleBookingId(booking.id);
+                                setRescheduleDialogOpen(true);
+                              }}
+                            >
+                              <RefreshCw size={14} /> Reschedule
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
                               className="gap-2 font-bold text-xs py-2.5 cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50"
                               onClick={() => updateStatus(booking.id, 'cancelled')}
                             >
@@ -393,6 +407,103 @@ export default function ScheduleDetailsPage() {
         </div>
 
       </div>
+
+      {/* Reschedule Dialog */}
+      <Dialog open={rescheduleDialogOpen} onOpenChange={setRescheduleDialogOpen}>
+        <DialogContent className="w-[95vw] sm:max-w-[480px] rounded-2xl p-6 max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold">Reschedule Patient</DialogTitle>
+            <p className="text-xs text-muted-foreground mt-1">
+              Select an available schedule to move this patient to.
+            </p>
+          </DialogHeader>
+
+          <div className="space-y-2 mt-4">
+            {allSchedules
+              ?.filter(s => s.id !== id && s.status === 'open')
+              .sort((a, b) => new Date(`${a.date}T${a.start_time}`).getTime() - new Date(`${b.date}T${b.start_time}`).getTime())
+              .map(s => {
+                const occupied = s.bookings?.filter(b => b.status === "confirmed").length || 0;
+                const isFull = occupied >= s.capacity;
+                return (
+                  <button
+                    key={s.id}
+                    disabled={isFull || rescheduleBooking.isPending}
+                    onClick={async () => {
+                      if (!rescheduleBookingId) return;
+                      try {
+                        await rescheduleBooking.mutateAsync({
+                          bookingId: rescheduleBookingId,
+                          newScheduleId: s.id
+                        });
+                        logAction('RESCHEDULE_BOOKING', rescheduleBookingId, 'booking', {
+                          from_schedule: id,
+                          to_schedule: s.id,
+                        });
+                        toast.success(`Patient rescheduled to ${format(new Date(s.date), 'MMM dd')} — ${s.title}`);
+                        setRescheduleDialogOpen(false);
+                        setRescheduleBookingId(null);
+                      } catch (err) {
+                        toast.error("Failed to reschedule");
+                      }
+                    }}
+                    className={`w-full text-left p-4 rounded-xl border transition-all flex items-center gap-4 group ${
+                      isFull
+                        ? "opacity-40 cursor-not-allowed border-border/30 bg-muted/10"
+                        : "border-border/40 hover:border-primary/30 hover:bg-primary/[0.03] hover:shadow-sm"
+                    }`}
+                  >
+                    <div className="w-12 h-12 rounded-xl bg-secondary/20 border border-secondary/30 flex flex-col items-center justify-center shrink-0">
+                      <span className="text-[10px] font-black text-muted-foreground uppercase leading-none">
+                        {format(new Date(s.date), 'MMM')}
+                      </span>
+                      <span className="text-base font-black text-foreground leading-none">
+                        {format(new Date(s.date), 'dd')}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-sm text-foreground truncate">{s.title}</p>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="flex items-center gap-1 text-[10px] text-muted-foreground font-medium">
+                          <Clock size={10} />
+                          {formatTime12h(s.start_time)} - {formatTime12h(s.end_time)}
+                        </span>
+                        <span className="flex items-center gap-1 text-[10px] text-muted-foreground font-medium">
+                          <Users size={10} />
+                          <span className="font-bold">{occupied}/{s.capacity}</span>
+                        </span>
+                      </div>
+                    </div>
+                    {!isFull && (
+                      <ChevronRight size={16} className="text-muted-foreground/40 group-hover:text-primary transition-colors shrink-0" />
+                    )}
+                    {isFull && (
+                      <span className="text-[9px] font-bold text-red-500 uppercase tracking-wider shrink-0">Full</span>
+                    )}
+                  </button>
+                );
+              })
+            }
+            
+            {(!allSchedules || allSchedules.filter(s => s.id !== id && s.status === 'open').length === 0) && (
+              <div className="text-center py-8 text-sm text-muted-foreground">
+                No other open schedules available.
+              </div>
+            )}
+          </div>
+
+          <div className="pt-4 border-t border-border/30 mt-4">
+            <Link
+              href="/admin/schedules"
+              onClick={() => setRescheduleDialogOpen(false)}
+              className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-primary hover:bg-primary/90 text-white text-sm font-bold transition-colors"
+            >
+              <CalendarIcon size={16} />
+              Create New Schedule
+            </Link>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

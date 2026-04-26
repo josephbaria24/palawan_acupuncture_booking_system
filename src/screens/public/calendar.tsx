@@ -1,42 +1,27 @@
 import { PublicLayout } from "@/components/layout/public-layout";
 import { useSchedules } from "@/hooks/use-acupuncture";
-import { format } from "date-fns";
-import { formatTime12h } from "@/utils/time";
-import Link from "next/link";
-import { Calendar as CalendarIcon, Clock, ArrowRight, Users } from "lucide-react";
-import { ScheduleBadge } from "@/components/ui/status-badge";
-import { useState } from "react";
-import { Calendar } from "@/components/ui/calendar";
 import { motion } from "framer-motion";
+import { ScheduleCalendar } from "@/components/admin/ScheduleCalendar";
+import { useState } from "react";
+import { format } from "date-fns";
+import Link from "next/link";
+import { formatTime12h } from "@/utils/time";
+import { CalendarDays, List, Users } from "lucide-react";
 
 export default function PublicCalendarScreen() {
   const { data: schedules = [], isLoading } = useSchedules();
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
 
-  // Only show open or full (if queue enabled) schedules to public
-  const publicSchedules = schedules.filter((s) => {
-    return s.status === "open" || (s.status === "full" && s.queue_enabled !== false);
+  // Public should only see open sessions and full sessions with queue enabled.
+  const publicSchedules = schedules.filter(
+    (s) => s.status === "open" || (s.status === "full" && s.queue_enabled !== false),
+  );
+
+  const sortedSchedules = [...publicSchedules].sort((a, b) => {
+    const dateDiff = new Date(a.date).getTime() - new Date(b.date).getTime();
+    if (dateDiff !== 0) return dateDiff;
+    return a.start_time.localeCompare(b.start_time);
   });
-
-  const availableSchedules = publicSchedules.filter((s) => {
-    if (selectedDate) {
-      const scheduleDate = new Date(s.date);
-      return (
-        scheduleDate.getFullYear() === selectedDate.getFullYear() &&
-        scheduleDate.getMonth() === selectedDate.getMonth() &&
-        scheduleDate.getDate() === selectedDate.getDate()
-      );
-    }
-    return true;
-  });
-
-  const datesWithSessions = Array.from(
-    new Set(publicSchedules.map((s) => new Date(s.date).toDateString())),
-  ).map((d) => new Date(d));
-
-  const datesWithAvailableSlots = Array.from(
-    new Set(publicSchedules.filter(s => s.status === 'open' || (s.status === 'full' && s.queue_enabled !== false)).map((s) => new Date(s.date).toDateString())),
-  ).map((d) => new Date(d));
 
   return (
     <PublicLayout>
@@ -66,194 +51,111 @@ export default function PublicCalendarScreen() {
             transition={{ delay: 0.2, duration: 0.5 }}
             className="text-sm sm:text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed px-2"
           >
-            Select a time that works for you. If a session is full, you can join
-            the waitlist.
+            Select a day and choose a session from the schedule map.
           </motion.p>
         </motion.div>
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-12">
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
-          <div className="w-full lg:w-80 shrink-0">
-            <div className="glass-card rounded-3xl p-6 md:sticky md:top-32 border border-primary/10 shadow-lg shadow-primary/5">
-              <h3 className="font-display font-bold text-xl mb-4 text-center">
-                Select a Date
-              </h3>
-              <div className="flex justify-center border-b border-border/50 pb-4 mb-4">
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  modifiers={{
-                    hasSessions: datesWithSessions,
-                    hasAvailableSlots: datesWithAvailableSlots,
-                  }}
-                  modifiersClassNames={{
-                    hasSessions: "font-bold text-primary",
-                    hasAvailableSlots: "bg-emerald-500/20 text-emerald-700 font-bold rounded-xl",
-                  }}
-                  className="bg-transparent"
-                />
-              </div>
-
-              <div className="text-center">
-                {selectedDate ? (
-                  <button
-                    onClick={() => setSelectedDate(undefined)}
-                    className="text-sm font-semibold text-destructive hover:underline"
-                  >
-                    Clear Filter
-                  </button>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    Showing all upcoming
-                  </p>
-                )}
-              </div>
-            </div>
+        <div className="mb-5 flex justify-end">
+          <div className="flex items-center bg-white border border-border/40 rounded-2xl p-1 shadow-sm">
+            <button
+              onClick={() => setViewMode("calendar")}
+              className={`h-10 px-3 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors ${
+                viewMode === "calendar"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-secondary/50"
+              }`}
+            >
+              <CalendarDays size={14} />
+              Calendar
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`h-10 px-3 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors ${
+                viewMode === "list"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-secondary/50"
+              }`}
+            >
+              <List size={14} />
+              List
+            </button>
           </div>
+        </div>
 
-          <div className="flex-1 w-full">
-            {isLoading ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="h-32 bg-card rounded-2xl animate-pulse"
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-8">
-                {Object.entries(
-                  availableSchedules.reduce((acc, schedule) => {
-                    const monthYear = format(new Date(schedule.date), "MMMM yyyy");
-                    if (!acc[monthYear]) acc[monthYear] = [];
-                    acc[monthYear].push(schedule);
-                    return acc;
-                  }, {} as Record<string, typeof availableSchedules>)
-                ).map(([monthYear, monthSchedules]) => (
-                  <div key={monthYear} className="space-y-4">
-                    <div className="flex items-center gap-4 py-2">
-                      <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-widest">{monthYear}</h2>
-                      <div className="h-px bg-border flex-1" />
-                    </div>
-                    
-                    <div className="space-y-3">
-                      {monthSchedules.map((schedule) => {
-                        const occupiedCount = schedule.bookings?.filter(b => b.status === "confirmed").length || 0;
-                        const availableSlots = schedule.capacity - occupiedCount;
-                        const isFullyBooked = availableSlots <= 0 || schedule.status === "full";
-                        
-                        let badgeText = "Open";
-                        let badgeStyle = "bg-emerald-100/50 text-emerald-800 border-emerald-200/50";
-                        
-                        if (schedule.status === "closed" || schedule.status === "completed") {
-                          badgeText = schedule.status.charAt(0).toUpperCase() + schedule.status.slice(1);
-                          badgeStyle = "bg-gray-100/50 text-gray-800 border-gray-200/50";
-                        } else if (isFullyBooked) {
-                          badgeText = "Fully Booked";
-                          badgeStyle = "bg-red-100/50 text-red-800 border-red-200/50";
-                        } else if (availableSlots === 1) {
-                          badgeText = "1 Slot Left";
-                          badgeStyle = "bg-orange-100/50 text-orange-800 border-orange-200/50";
-                        }
-                        
-                        return (
-                        <div
-                          key={schedule.id}
-                          className="bg-card/50 backdrop-blur-sm rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border border-border/40 hover:border-primary/20 hover:bg-card/80 transition-all shadow-sm group"
-                        >
-                          <div className="flex gap-4 items-center w-full sm:w-auto">
-                            <div className="w-12 h-12 rounded-lg bg-primary/5 flex flex-col items-center justify-center text-primary shrink-0 border border-primary/10">
-                              <span className="text-[9px] font-bold uppercase tracking-wider">
-                                {format(new Date(schedule.date), "EEE")}
-                              </span>
-                              <span className="text-lg font-black font-display leading-none">
-                                {format(new Date(schedule.date), "dd")}
-                              </span>
-                            </div>
-                            <div className="flex-1">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <h3 className="font-bold text-foreground group-hover:text-primary transition-colors leading-tight">
-                                      {schedule.title}
-                                    </h3>
-                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeStyle}`}>
-                                      {badgeText}
-                                    </span>
-                                  </div>
-                                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground text-xs font-medium">
-                                    <span className="flex items-center gap-1">
-                                      <Clock size={12} /> {formatTime12h(schedule.start_time)} -{" "}
-                                      {formatTime12h(schedule.end_time)}
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                      <Users size={12} /> 
-                                      {occupiedCount} / {schedule.capacity} slots
-                                    </span>
-                                    <span className="font-bold text-foreground">
-                                      ₱{schedule.price}
-                                    </span>
-                                  </div>
-                            </div>
-                          </div>
+        {viewMode === "calendar" ? (
+          <ScheduleCalendar
+            schedules={publicSchedules}
+            isLoading={isLoading}
+            scheduleLinkBasePath="/book"
+          />
+        ) : (
+          <div className="rounded-2xl border border-border/40 bg-white shadow-sm overflow-hidden">
+            <div className="hidden md:grid md:grid-cols-12 gap-4 px-5 py-3 bg-secondary/20 border-b border-border/40 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              <div className="col-span-3">Month</div>
+              <div className="col-span-2">Day</div>
+              <div className="col-span-3">Time</div>
+              <div className="col-span-2">Slots</div>
+              <div className="col-span-2">Action</div>
+            </div>
 
-                          {isFullyBooked ? (
-                            schedule.queue_enabled !== false ? (
-                              <Link
-                                href={`/book/${schedule.id}`}
-                                className="w-full sm:w-auto px-5 py-2.5 bg-amber-500 text-white font-semibold rounded-lg hover:bg-amber-600 transition-all shadow-sm flex items-center justify-center gap-2 text-sm shadow-amber-500/20"
-                              >
-                                Join Waitlist <ArrowRight size={14} />
-                              </Link>
-                            ) : (
-                              <button
-                                disabled
-                                className="w-full sm:w-auto px-5 py-2.5 bg-muted/50 text-muted-foreground font-semibold rounded-lg cursor-not-allowed flex items-center justify-center gap-2 text-sm border border-transparent"
-                              >
-                                Fully Booked
-                              </button>
-                            )
-                          ) : (
-                            <Link
-                              href={`/book/${schedule.id}`}
-                              className="w-full sm:w-auto px-5 py-2.5 bg-foreground text-background font-semibold rounded-lg hover:bg-primary hover:text-white transition-all shadow-sm flex items-center justify-center gap-2 text-sm group-hover:shadow-primary/20"
-                            >
-                              Book Now <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
-                            </Link>
-                          )}
-                        </div>
-                      )})}
-                    </div>
+            {sortedSchedules.map((schedule) => {
+              const occupiedCount = schedule.bookings?.filter((b) => b.status === "confirmed").length || 0;
+              const isFull = occupiedCount >= schedule.capacity || schedule.status === "full";
+
+              return (
+                <div
+                  key={schedule.id}
+                  className="grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 px-5 py-4 border-b border-border/40 last:border-b-0"
+                >
+                  <div className="md:col-span-3 text-sm font-semibold">
+                    {format(new Date(schedule.date), "MMMM yyyy")}
                   </div>
-                ))}
-
-                {availableSchedules.length === 0 && (
-                  <div className="text-center py-20 bg-card rounded-3xl border border-border">
-                    <CalendarIcon
-                      size={48}
-                      className="mx-auto text-muted-foreground/30 mb-4"
-                    />
-                    <h3 className="text-xl font-bold mb-2">No sessions found</h3>
-                    <p className="text-muted-foreground">
-                      {selectedDate
-                        ? "There are no available sessions on the selected date."
-                        : "Please check back later for new availability."}
-                    </p>
-                    {selectedDate && (
-                      <button
-                        onClick={() => setSelectedDate(undefined)}
-                        className="mt-6 px-6 py-2 bg-secondary text-foreground font-semibold rounded-xl hover:bg-secondary/80 transition-colors"
+                  <div className="md:col-span-2 text-sm">
+                    {format(new Date(schedule.date), "EEE, dd")}
+                  </div>
+                  <div className="md:col-span-3 text-sm">
+                    {formatTime12h(schedule.start_time)} - {formatTime12h(schedule.end_time)}
+                  </div>
+                  <div className="md:col-span-2 text-sm font-medium flex items-center gap-1.5">
+                    <Users size={13} className="text-muted-foreground" />
+                    {occupiedCount}/{schedule.capacity}
+                  </div>
+                  <div className="md:col-span-2">
+                    {isFull ? (
+                      schedule.queue_enabled !== false ? (
+                        <Link
+                          href={`/book/${schedule.id}`}
+                          className="inline-flex px-3 py-1.5 bg-amber-500 text-white text-xs font-semibold rounded-md hover:bg-amber-600 transition-colors"
+                        >
+                          Join Waitlist
+                        </Link>
+                      ) : (
+                        <span className="inline-flex px-3 py-1.5 bg-muted text-muted-foreground text-xs font-semibold rounded-md">
+                          Closed
+                        </span>
+                      )
+                    ) : (
+                      <Link
+                        href={`/book/${schedule.id}`}
+                        className="inline-flex px-3 py-1.5 bg-foreground text-background text-xs font-semibold rounded-md hover:bg-primary hover:text-white transition-colors"
                       >
-                        View All Dates
-                      </button>
+                        Book
+                      </Link>
                     )}
                   </div>
-                )}
+                </div>
+              );
+            })}
+
+            {!isLoading && sortedSchedules.length === 0 && (
+              <div className="p-12 text-center text-muted-foreground font-medium">
+                No sessions found.
               </div>
             )}
           </div>
-        </div>
+        )}
       </div>
     </PublicLayout>
   );
