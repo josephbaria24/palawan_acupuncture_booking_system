@@ -1,3 +1,5 @@
+"use client";
+
 import { PublicLayout } from "@/components/layout/public-layout";
 import { useSchedules } from "@/hooks/use-acupuncture";
 import { motion } from "framer-motion";

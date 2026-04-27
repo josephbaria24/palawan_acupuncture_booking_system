@@ -1,22 +1,22 @@
-import PublicCalendarScreen from "@/screens/public/calendar";
 import type { Metadata } from "next";
 import { OG_IMAGE_PATH, SITE_NAME, SITE_URL } from "@/lib/site";
 
-const title = "Book an Appointment";
-const description = "View available sessions and book your acupuncture appointment.";
+const title = "Track your session";
+const description =
+  "Enter your booking reference code to view your acupuncture appointment status in Puerto Princesa, Palawan.";
 
 export const metadata: Metadata = {
   title,
   description,
   alternates: {
-    canonical: "/book",
+    canonical: "/track",
   },
   openGraph: {
     title: `${title} | ${SITE_NAME}`,
     description,
     type: "website",
     locale: "en_PH",
-    url: `${SITE_URL}/book`,
+    url: `${SITE_URL}/track`,
     siteName: SITE_NAME,
     images: [
       {
@@ -35,6 +35,6 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Page() {
-  return <PublicCalendarScreen />;
+export default function TrackLayout({ children }: { children: React.ReactNode }) {
+  return children;
 }

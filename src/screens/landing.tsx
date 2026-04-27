@@ -1,4 +1,7 @@
+"use client";
+
 import React from "react";
+import Image from "next/image";
 import { PublicLayout } from "@/components/layout/public-layout";
 import Link from "next/link";
 import { ArrowRight, Leaf, Clock, Star } from "lucide-react";
@@ -79,12 +82,19 @@ export default function LandingScreen() {
             transition={{ duration: 0.6, delay: 0.05 }}
             className="relative overflow-hidden rounded-[2.5rem] border border-white/50 shadow-2xl shadow-primary/10 bg-background min-h-[500px] lg:min-h-[650px] flex items-center"
           >
-            <motion.img
-              src="/images/hero.jpg"
-              alt="Palawan Acupuncture Healing"
-              className="absolute inset-0 w-full h-full object-cover"
+            <motion.div
+              className="absolute inset-0 w-full h-full"
               style={{ scale: heroImageScale }}
-            />
+            >
+              <Image
+                src="/images/hero.jpg"
+                alt="Palawan Acupuncture Healing"
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 95vw, 1400px"
+                priority
+              />
+            </motion.div>
             <div className="absolute inset-0 bg-gradient-to-r from-background/10 via-black/20 to-black/60" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
 
@@ -113,6 +123,12 @@ export default function LandingScreen() {
                       className="px-6 py-3.5 lg:px-8 lg:py-4 rounded-2xl bg-primary text-white font-semibold text-base lg:text-lg hover:bg-primary/90 hover:-translate-y-0.5 transition-all duration-300 shadow-lg shadow-primary/25 flex items-center justify-center gap-2"
                     >
                       Book Appointment <ArrowRight size={18} />
+                    </Link>
+                    <Link
+                      href="/articles"
+                      className="px-6 py-3.5 lg:px-8 lg:py-4 rounded-2xl bg-white/15 backdrop-blur-xl border border-white/25 text-white font-semibold text-base lg:text-lg hover:bg-white/25 transition-all duration-300 flex items-center justify-center gap-2"
+                    >
+                      Read articles
                     </Link>
                   </div>
 
@@ -227,11 +243,13 @@ export default function LandingScreen() {
                       customClass="bg-card border-border shadow-2xl !p-0 overflow-hidden !rounded-[2rem] sm:!rounded-[2.5rem]"
                     >
                       <div className="flex flex-col h-full p-5 sm:p-8">
-                        <div className="aspect-[4/3] rounded-2xl sm:rounded-3xl overflow-hidden bg-background border border-border/70 mb-4 sm:mb-6 shrink-0">
-                          <img
+                        <div className="aspect-[4/3] rounded-2xl sm:rounded-3xl overflow-hidden bg-background border border-border/70 mb-4 sm:mb-6 shrink-0 relative">
+                          <Image
                             src={`/images/${benefit.image}`}
                             alt={benefit.title}
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 80vw, 420px"
                           />
                         </div>
 
@@ -276,11 +294,14 @@ export default function LandingScreen() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
             <div className="relative h-fit self-center">
-              <div className="h-fit rounded-[2rem] overflow-hidden border border-border/70 shadow-2xl shadow-primary/10">
-                <img
+              <div className="h-fit rounded-[2rem] overflow-hidden border border-border/70 shadow-2xl shadow-primary/10 relative">
+                <Image
                   src="/images/feelsgood.png"
                   alt="Expert acupuncture care"
+                  width={960}
+                  height={720}
                   className="w-full h-auto block"
+                  sizes="(max-width: 1024px) 100vw, 480px"
                 />
               </div>
 

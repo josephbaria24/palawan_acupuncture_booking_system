@@ -22,6 +22,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
         links: [
           { label: "Our Benefits", href: "/#benefits", ariaLabel: "View Benefits" },
           { label: "Why Choose Us", href: "/#why", ariaLabel: "Why Choose Us" },
+          { label: "Articles", href: "/articles", ariaLabel: "Acupuncture articles" },
         ],
       },
       {

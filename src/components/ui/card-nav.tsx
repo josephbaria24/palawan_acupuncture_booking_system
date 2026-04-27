@@ -1,4 +1,5 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { gsap } from 'gsap';
 import { GoArrowUpRight } from 'react-icons/go';
 
@@ -184,12 +185,22 @@ const CardNav: React.FC<CardNavProps> = ({
                         />
                     </div>
 
-                    <div className="logo-container flex items-center gap-2 md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 order-1 md:order-none">
+                    <Link
+                        href="/"
+                        className="logo-container flex items-center gap-2 md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 order-1 md:order-none text-inherit no-underline hover:opacity-90 transition-opacity"
+                        aria-label="Palawan Acupuncture home"
+                        onClick={() => {
+                            if (!isExpanded) return;
+                            setIsHamburgerOpen(false);
+                            tlRef.current?.eventCallback('onReverseComplete', () => setIsExpanded(false));
+                            tlRef.current?.reverse();
+                        }}
+                    >
                         <img src={logo} alt={logoAlt} className="logo h-[28px]" />
                         <span className="font-display font-black tracking-tight text-foreground whitespace-nowrap text-sm md:text-base">
                             Palawan<span className="text-primary font-bold"> Acupuncture</span>
                         </span>
-                    </div>
+                    </Link>
 
                     <button
                         type="button"
