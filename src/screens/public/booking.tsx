@@ -56,7 +56,7 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
   const handleBook = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.client_name || !formData.phone || !formData.email) {
+    if (!formData.client_name || !formData.phone) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -161,7 +161,7 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
               <p className="text-xs text-muted-foreground mt-4">Please save this code for tracking your appointment.</p>
             </div>
 
-            {bookingStatus === 'confirmed' && (
+            {bookingStatus === 'confirmed' && formData.email && (
               <div className="mb-8 text-left">
                 <CalendarSyncCard 
                   email={formData.email} 
@@ -244,13 +244,12 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
                         </div>
                       </div>
                       <div className="space-y-1.5">
-                        <label htmlFor="email" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Email Address</label>
+                        <label htmlFor="email" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Email Address (Optional)</label>
                         <div className="relative">
                           <Input 
                             id="email"
                             type="email"
                             placeholder="john@example.com" 
-                            required
                             value={formData.email}
                             onChange={(e) => setFormData({...formData, email: e.target.value})}
                             className="pl-10 h-12 rounded-xl border-border/50 focus:ring-primary/20"

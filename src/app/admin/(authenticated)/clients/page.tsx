@@ -38,17 +38,19 @@ export default function AdminClients() {
     if (!bookings) return [];
 
     const grouped = bookings.reduce((acc, booking) => {
-      const email = booking.email.toLowerCase().trim();
-      if (!acc[email]) {
-        acc[email] = {
-          id: email,
+      const email = booking.email ? booking.email.toLowerCase().trim() : "";
+      const groupKey = email || `${booking.client_name.toLowerCase().trim()}-${booking.phone.trim()}`;
+      
+      if (!acc[groupKey]) {
+        acc[groupKey] = {
+          id: groupKey,
           name: booking.client_name,
-          email: booking.email,
+          email: booking.email || "No Email",
           phone: booking.phone,
           bookings: []
         };
       }
-      acc[email].bookings.push(booking);
+      acc[groupKey].bookings.push(booking);
       return acc;
     }, {} as Record<string, any>);
 

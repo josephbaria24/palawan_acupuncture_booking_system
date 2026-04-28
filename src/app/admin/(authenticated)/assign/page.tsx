@@ -48,12 +48,13 @@ export default function AdminAssignClient() {
     if (!allBookings) return [];
     const clientsMap = new Map();
     allBookings.forEach(b => {
-      const key = `${b.client_name.toLowerCase()}-${b.email.toLowerCase()}`;
+      const email = b.email ? b.email.toLowerCase().trim() : "";
+      const key = email || `${b.client_name.toLowerCase().trim()}-${b.phone.trim()}`;
       if (!clientsMap.has(key)) {
         clientsMap.set(key, {
           name: b.client_name,
           phone: b.phone,
-          email: b.email
+          email: b.email || ""
         });
       }
     });
@@ -65,7 +66,7 @@ export default function AdminAssignClient() {
     const query = formData.client_name.toLowerCase();
     return uniqueClients.filter(c => 
       c.name.toLowerCase().includes(query) || 
-      c.email.toLowerCase().includes(query)
+      (c.email && c.email.toLowerCase().includes(query))
     ).slice(0, 5); // Limit to top 5 suggestions
   }, [uniqueClients, formData.client_name, showSuggestions]);
 

@@ -8,6 +8,7 @@ import Link from "next/link";
 import { ScheduleWithBookings } from "@/types/database";
 import { formatTime12h } from "@/utils/time";
 import { motion, AnimatePresence } from "framer-motion";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ScheduleCalendarProps {
   schedules: ScheduleWithBookings[];
@@ -166,37 +167,39 @@ export function ScheduleCalendar({
               {selectedDateSchedules.length === 0 ? (
                 <p className="text-xs text-muted-foreground italic py-4 text-center">No sessions on this day</p>
               ) : (
-                <div className="space-y-3">
-                  {selectedDateSchedules.map(schedule => {
-                    const occupied = schedule.bookings?.filter(b => b.status === "confirmed").length || 0;
-                    return (
-                      <Link
-                        key={schedule.id}
-                        href={`${scheduleLinkBasePath}/${schedule.id}`}
-                        className="block group"
-                      >
-                        <div className={`rounded-xl p-3 border ${getStatusColor(schedule)} transition-all hover:shadow-md`}>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-[11px] font-black px-2 py-0.5 rounded-md bg-white/60">
-                              {formatTime12h(schedule.start_time)}
-                            </span>
-                          </div>
-                          <p className="font-bold text-sm mb-1">{schedule.title}</p>
-                          <div className="flex items-center gap-1 text-[10px] opacity-80">
-                            <Users size={10} />
-                            <span className="font-bold">{occupied}/{schedule.capacity}</span>
-                          </div>
-                          {schedule.location && (
-                            <div className="flex items-center gap-1 text-[10px] opacity-80 mt-1">
-                              <MapPin size={10} />
-                              <span className="truncate">{schedule.location}</span>
+                <ScrollArea className="h-[350px] pr-4 -mr-4">
+                  <div className="space-y-3">
+                    {selectedDateSchedules.map(schedule => {
+                      const occupied = schedule.bookings?.filter(b => b.status === "confirmed").length || 0;
+                      return (
+                        <Link
+                          key={schedule.id}
+                          href={`${scheduleLinkBasePath}/${schedule.id}`}
+                          className="block group"
+                        >
+                          <div className={`rounded-xl p-3 border ${getStatusColor(schedule)} transition-all hover:shadow-md`}>
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-[11px] font-black px-2 py-0.5 rounded-md bg-white/60">
+                                {formatTime12h(schedule.start_time)}
+                              </span>
                             </div>
-                          )}
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
+                            <p className="font-bold text-sm mb-1">{schedule.title}</p>
+                            <div className="flex items-center gap-1 text-[10px] opacity-80">
+                              <Users size={10} />
+                              <span className="font-bold">{occupied}/{schedule.capacity}</span>
+                            </div>
+                            {schedule.location && (
+                              <div className="flex items-center gap-1 text-[10px] opacity-80 mt-1">
+                                <MapPin size={10} />
+                                <span className="truncate">{schedule.location}</span>
+                              </div>
+                            )}
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
               )}
             </motion.div>
           )}
