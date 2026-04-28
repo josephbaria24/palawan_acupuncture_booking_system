@@ -24,11 +24,13 @@ import { formatTime12h } from "@/utils/time";
 import { useState, useMemo } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 export default function AdminAssignClient() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const preselectedScheduleId = searchParams.get("scheduleId")?.trim() ?? "";
   const { data: schedules, isLoading: isSchedulesLoading } = useSchedules();
   const { data: allBookings } = useAllBookings();
   const createBooking = useCreateBooking();
@@ -39,7 +41,7 @@ export default function AdminAssignClient() {
     client_name: "",
     phone: "",
     email: "",
-    schedule_id: ""
+    schedule_id: preselectedScheduleId
   });
 
   const [slotSearch, setSlotSearch] = useState("");
@@ -94,7 +96,7 @@ export default function AdminAssignClient() {
         notes: ""
       });
       toast.success("Client assigned successfully!");
-      router.push("/admin");
+      router.push(formData.schedule_id ? `/admin/schedules/${formData.schedule_id}` : "/admin/schedules");
     } catch (error) {
       toast.error("Failed to create booking");
     }

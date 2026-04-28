@@ -226,6 +226,28 @@ export function useRescheduleBooking() {
   });
 }
 
+export function useMarkBookingArrived() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, arrivedAt }: { id: string; arrivedAt?: string }) => {
+      const { data: updatedBooking, error } = await supabase
+        .from('bookings')
+        .update({ arrived_at: arrivedAt ?? new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return updatedBooking as Booking;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookings'] });
+      queryClient.invalidateQueries({ queryKey: ['schedules'] });
+      queryClient.invalidateQueries({ queryKey: ['schedule'] });
+    }
+  });
+}
+
 export function useBookingByReference(referenceCode: string) {
   return useQuery({
     queryKey: ['booking', 'reference', referenceCode],

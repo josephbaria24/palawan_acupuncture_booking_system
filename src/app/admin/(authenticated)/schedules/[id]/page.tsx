@@ -1,9 +1,9 @@
 "use client";
 
-import { useSchedule, useSchedules, useBookings, useDeleteSchedule, useUpdateBookingStatus, useUpdateSchedule, useRescheduleBooking } from "@/hooks/use-acupuncture";
+import { useSchedule, useSchedules, useBookings, useDeleteSchedule, useUpdateBookingStatus, useUpdateSchedule, useRescheduleBooking, useMarkBookingArrived } from "@/hooks/use-acupuncture";
 import { useAuditLog } from "@/hooks/use-audit";
 import { format } from "date-fns";
-import { ArrowLeft, X, UserPlus, HelpCircle, Loader2, Calendar as CalendarIcon, Download, Share2, UserX, Ban, MapPin, RefreshCw, Clock, Users, ChevronRight } from "lucide-react";
+import { ArrowLeft, X, UserPlus, HelpCircle, Loader2, Calendar as CalendarIcon, Download, Share2, UserX, Ban, MapPin, RefreshCw, Clock, Users, ChevronRight, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,7 @@ export default function ScheduleDetailsPage() {
   const updateBookingStatus = useUpdateBookingStatus();
   const updateSchedule = useUpdateSchedule();
   const rescheduleBooking = useRescheduleBooking();
+  const markBookingArrived = useMarkBookingArrived();
   const { logAction } = useAuditLog();
 
   const [origin, setOrigin] = useState("");
@@ -130,6 +131,20 @@ export default function ScheduleDetailsPage() {
     } catch (error) {
       toast.error("Failed to delete schedule");
       console.error(error);
+    }
+  };
+
+  const handleMarkArrived = async (bookingId: string) => {
+    const arrivedAt = new Date().toISOString();
+    try {
+      await markBookingArrived.mutateAsync({ id: bookingId, arrivedAt });
+      logAction('MARK_CLIENT_ARRIVED', bookingId, 'booking', {
+        arrived_at: arrivedAt,
+        schedule_id: id,
+      });
+      toast.success("Arrival time recorded");
+    } catch (error) {
+      toast.error("Failed to record arrival");
     }
   };
 
@@ -275,7 +290,7 @@ export default function ScheduleDetailsPage() {
             <div className="bg-card rounded-3xl p-6 sm:p-8 shadow-sm shadow-black/[0.02] border border-border/40">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold tracking-tight">Confirmed Patients ({occupiedCount})</h2>
-                <Link href="/admin/assign" className="text-sm font-bold text-primary hover:text-primary/80 transition-colors">
+                <Link href={`/admin/assign?scheduleId=${id}`} className="text-sm font-bold text-primary hover:text-primary/80 transition-colors">
                   + Manually Assign
                 </Link>
               </div>
@@ -305,9 +320,22 @@ export default function ScheduleDetailsPage() {
                       </div>
 
                       <div className="flex items-center gap-3 shrink-0">
-                        <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                          Confirmed
-                        </span>
+                        {booking.arrived_at ? (
+                          <span className="px-3 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">
+                            Arrived {format(new Date(booking.arrived_at), 'hh:mm a')}
+                          </span>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleMarkArrived(booking.id)}
+                            disabled={markBookingArrived.isPending}
+                            className="h-8 px-3 rounded-xl text-[10px] font-bold border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+                          >
+                            <CheckCircle2 size={12} className="mr-1" />
+                            Arrived
+                          </Button>
+                        )}
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <button 

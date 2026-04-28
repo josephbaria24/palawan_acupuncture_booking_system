@@ -29,6 +29,7 @@ export interface Booking {
   email: string;
   notes: string;
   status: BookingStatus;
+  arrived_at?: string | null;
   queue_position?: number;
   assigned_by: 'client' | 'admin';
   reference_code: string;
