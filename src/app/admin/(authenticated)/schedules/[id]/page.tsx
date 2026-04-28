@@ -138,7 +138,8 @@ export default function ScheduleDetailsPage() {
     const arrivedAt = new Date().toISOString();
     try {
       await markBookingArrived.mutateAsync({ id: bookingId, arrivedAt });
-      logAction('MARK_CLIENT_ARRIVED', bookingId, 'booking', {
+      logAction('UPDATE_BOOKING_STATUS', bookingId, 'booking', {
+        update_type: 'arrival_check_in',
         arrived_at: arrivedAt,
         schedule_id: id,
       });
