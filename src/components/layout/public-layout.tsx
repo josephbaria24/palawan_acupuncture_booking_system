@@ -102,27 +102,27 @@ export function PublicLayout({ children }: { children: ReactNode }) {
         </motion.div>
       </main>
 
-      <footer className="bg-card py-16 border-t border-border relative overflow-hidden">
+      <footer className="bg-card py-10 sm:py-16 border-t border-border relative overflow-hidden">
         <div className="absolute inset-0 bg-primary/[0.02] pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-12 mb-8 sm:mb-12">
             {/* Branding & Contact */}
-            <div className="space-y-6">
-              <Link href="/" className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white border border-border flex items-center justify-center shadow-sm">
+            <div className="space-y-4 sm:space-y-6">
+              <Link href="/" className="flex items-center gap-2.5 sm:gap-3">
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white border border-border flex items-center justify-center shadow-sm">
                   <img src="/images/logo.png" alt="Logo" className="w-full h-full object-contain" />
                 </div>
-                <div className="font-display font-black text-xl tracking-tight">
+                <div className="font-display font-black text-lg sm:text-xl tracking-tight">
                   Palawan<span className="text-primary"> Acupuncture</span>
                 </div>
               </Link>
-              <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-xs">
                 Traditional acupuncture healing in the heart of Palawan. Where ancient wisdom meets modern healing.
               </p>
-              <div className="flex flex-col gap-3">
-                <a href="tel:09524406339" className="flex items-center gap-3 text-sm font-semibold text-muted-foreground hover:text-primary transition-colors">
-                  <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+              <div className="flex flex-col gap-2 sm:gap-3">
+                <a href="tel:09524406339" className="flex items-center gap-2.5 sm:gap-3 text-sm font-semibold text-muted-foreground hover:text-primary transition-colors">
+                  <div className="size-7 sm:size-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                     <Phone size={14} />
                   </div>
                   0952 440 6339
@@ -131,17 +131,17 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             </div>
 
             {/* Opening Hours */}
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               <h4 className="text-xs font-black uppercase tracking-widest text-foreground flex items-center gap-2">
                 <Clock size={14} className="text-primary" />
                 Opening Hours
               </h4>
-              <div className="space-y-3">
+              <div className="space-y-2.5 sm:space-y-3">
                 <div className="flex flex-col gap-1">
                   <span className="text-sm font-bold text-foreground">Wednesday to Sunday</span>
                   <span className="text-sm text-muted-foreground font-medium">9:00 AM — 7:00 PM</span>
                 </div>
-                <div className="pt-2">
+                <div className="pt-1.5 sm:pt-2">
                   <span className="inline-flex py-1 px-3 rounded-full bg-amber-500/10 text-amber-600 text-[10px] font-black uppercase tracking-widest border border-amber-500/20">
                     Closed Mon & Tue
                   </span>
@@ -150,24 +150,24 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             </div>
 
             {/* Social & Connect */}
-            <div className="space-y-6">
+            <div className="space-y-4 sm:space-y-6">
               <h4 className="text-xs font-black uppercase tracking-widest text-foreground">Connect With Us</h4>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5 sm:gap-3">
                 <a
                   href="https://www.facebook.com/palawanacupuncture"
                   target="_blank"
-                  className="size-11 rounded-2xl bg-muted/50 border border-border flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 shadow-sm"
+                  className="size-10 sm:size-11 rounded-xl sm:rounded-2xl bg-muted/50 border border-border flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 shadow-sm"
                   aria-label="Facebook"
                 >
-                  <Facebook size={20} />
+                  <Facebook size={18} />
                 </a>
                 <a
                   href="https://www.instagram.com/palawanacupuncture?fbclid=IwY2xjawRAMVVleHRuA2FlbQIxMABicmlkETFHcEk2WE5NMXNVa0phVXloc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHuKguucX2ihEu-iva19qXdBPbr_UkHLEwjs6nrcpyjA-xHwLzcWWf7JgdKZA_aem_OETPd7UOEwy005wDxBv-nQ"
                   target="_blank"
-                  className="size-11 rounded-2xl bg-muted/50 border border-border flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 shadow-sm"
+                  className="size-10 sm:size-11 rounded-xl sm:rounded-2xl bg-muted/50 border border-border flex items-center justify-center text-muted-foreground hover:bg-primary hover:text-white hover:border-primary transition-all duration-300 shadow-sm"
                   aria-label="Instagram"
                 >
-                  <Instagram size={20} />
+                  <Instagram size={18} />
                 </a>
               </div>
               <p className="text-[11px] text-muted-foreground font-medium">
@@ -176,7 +176,7 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             </div>
 
             {/* Location */}
-            <div className="space-y-6 text-left">
+            <div className="space-y-4 sm:space-y-6 text-left">
               <h4 className="text-xs font-black uppercase tracking-widest text-foreground flex items-center gap-2">
                 <MapPin size={14} className="text-primary" />
                 Located At
@@ -188,12 +188,12 @@ export function PublicLayout({ children }: { children: ReactNode }) {
             </div>
           </div>
 
-          <div className="pt-12 border-t border-border/50 flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden">
-            <p className="text-[11px] text-muted-foreground font-medium tracking-tight">
+          <div className="pt-6 sm:pt-12 border-t border-border/50 flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-6 overflow-hidden">
+            <p className="text-[10px] sm:text-[11px] text-muted-foreground font-medium tracking-tight text-center md:text-left">
               © {new Date().getFullYear()} Palawan Acupuncture Clinic. All rights reserved. PITAHC Certified Practitioner.
             </p>
 
-            <div className="flex items-center gap-3 backdrop-blur-sm bg-white/40 py-2 px-4 rounded-2xl border border-white/60 shadow-sm">
+            <div className="flex items-center gap-2 sm:gap-3 backdrop-blur-sm bg-white/40 py-1.5 sm:py-2 px-3 sm:px-4 rounded-xl sm:rounded-2xl border border-white/60 shadow-sm">
               <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">Developed by</span>
               <div className="flex items-center gap-1 group">
                 <span className="text-xs font-black text-slate-800  transition-colors group-hover:text-primary">PetroCore</span>

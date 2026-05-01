@@ -187,9 +187,9 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
 
   return (
     <PublicLayout>
-      <div className="bg-secondary/20 py-10 border-b border-border">
+      <div className="bg-secondary/20 py-4 md:py-10 border-b border-border">
         <div className="max-w-4xl mx-auto px-4">
-          <Link href="/book" className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-primary transition-colors mb-6 group">
+          <Link href="/book" className="inline-flex items-center gap-2 text-xs md:text-sm font-semibold text-muted-foreground hover:text-primary transition-colors mb-3 md:mb-6 group">
             <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
             Back to sessions
           </Link>
@@ -197,16 +197,72 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <h1 className="text-3xl md:text-4xl font-display font-black text-foreground mb-2">Complete Your Booking</h1>
-            <p className="text-muted-foreground">Secure your spot for the acupuncture session.</p>
+            <h1 className="text-md md:text-4xl font-display font-black text-foreground mb-1">Complete Your Booking</h1>
+            <p className="text-sm md:text-base text-muted-foreground">Secure your spot for the acupuncture session.</p>
           </motion.div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-12">
+      <div className="max-w-4xl mx-auto px-4 py-3 md:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Form */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Mobile Compact Session Summary */}
+            <Card className="lg:hidden border-border/50 shadow-sm rounded-2xl overflow-hidden">
+              <div className="bg-primary/5 px-4 py-3 border-b border-border/50">
+                <h3 className="font-display font-bold text-base">Session Details</h3>
+              </div>
+              <CardContent className="p-4 space-y-3">
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-secondary/50 flex items-center justify-center text-primary shrink-0 border border-secondary">
+                      <MapPin size={14} />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Location</p>
+                      <p className="font-bold text-foreground leading-tight text-sm">{schedule.location || "Palawan Clinic"}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-secondary/50 flex items-center justify-center text-primary shrink-0 border border-secondary">
+                      <Calendar size={14} />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Date</p>
+                      <p className="font-bold text-foreground leading-tight text-sm">
+                        {format(new Date(schedule.date), 'EEEE, MMMM dd, yyyy')}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-secondary/50 flex items-center justify-center text-primary shrink-0 border border-secondary">
+                      <Clock size={14} />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Session Duration</p>
+                      <p className="font-bold text-foreground text-sm">
+                        {formatTime12h(schedule.start_time)} - {formatTime12h(schedule.end_time)}
+                      </p>
+                      <div className="mt-0.5 flex flex-col gap-0.5">
+                        <span className="text-[11px] font-medium text-foreground">45 minutes total</span>
+                        <span className="text-[9px] text-muted-foreground font-medium">30m treatment • 15m assessment</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-border/50">
+                  <div className="flex justify-between items-end mb-0.5">
+                    <span className="text-xs font-medium text-muted-foreground">Session Fee</span>
+                    <span className="text-2xl font-display font-black text-foreground">₱{schedule.price}</span>
+                  </div>
+                  <p className="text-[10px] text-right text-muted-foreground">Payment will be settled on-site.</p>
+                </div>
+              </CardContent>
+            </Card>
+
             <form onSubmit={handleBook} className="space-y-6">
               <Card className="border-border/50 shadow-sm overflow-hidden rounded-3xl">
                 <div className="h-2 bg-primary" />
@@ -295,7 +351,7 @@ export default function PublicBookingScreen({ id }: PublicBookingScreenProps) {
           </div>
 
           {/* Sidebar / Summary */}
-          <div className="space-y-6">
+          <div className="hidden lg:block space-y-6">
             <Card className="border-border/50 shadow-sm rounded-3xl overflow-hidden sticky top-32">
               <div className="bg-primary/5 p-6 border-b border-border/50">
                 <h3 className="font-display font-bold text-xl">Session Details</h3>

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, isToday } from "date-fns";
-import { ChevronLeft, ChevronRight, Clock, Users, MapPin } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronDown, Clock, Users, MapPin } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import Link from "next/link";
 import { ScheduleWithBookings } from "@/types/database";
@@ -23,6 +23,7 @@ export function ScheduleCalendar({
 }: ScheduleCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const selectedDayDetailRef = useRef<HTMLDivElement | null>(null);
 
   const calendarDays = useMemo(() => {
     const monthStart = startOfMonth(currentMonth);
@@ -69,9 +70,9 @@ export function ScheduleCalendar({
   return (
     <div className="flex flex-col lg:flex-row gap-6">
       {/* Left Sidebar: Mini Calendar + Selected Day Detail */}
-      <div className="w-full lg:w-72 shrink-0 space-y-4">
+      <div className="w-full lg:w-72 shrink-0 space-y-4 order-2 lg:order-1">
         {/* Mini Calendar */}
-        <div className="bg-white rounded-2xl shadow-sm border border-border/30 p-3">
+        <div className="hidden lg:block bg-white rounded-2xl shadow-sm border border-border/30 p-3">
           <style>{`
             .rdp-day.has-schedule-open { position: relative; }
             .rdp-day.has-schedule-open::after {
@@ -155,6 +156,7 @@ export function ScheduleCalendar({
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
+              ref={selectedDayDetailRef}
               className="bg-white rounded-2xl shadow-sm border border-border/30 p-5"
             >
               <h3 className="font-bold text-base mb-1">
@@ -167,39 +169,55 @@ export function ScheduleCalendar({
               {selectedDateSchedules.length === 0 ? (
                 <p className="text-xs text-muted-foreground italic py-4 text-center">No sessions on this day</p>
               ) : (
-                <ScrollArea className="h-[350px] pr-4 -mr-4">
-                  <div className="space-y-3">
-                    {selectedDateSchedules.map(schedule => {
-                      const occupied = schedule.bookings?.filter(b => b.status === "confirmed").length || 0;
-                      return (
-                        <Link
-                          key={schedule.id}
-                          href={`${scheduleLinkBasePath}/${schedule.id}`}
-                          className="block group"
-                        >
-                          <div className={`rounded-xl p-3 border ${getStatusColor(schedule)} transition-all hover:shadow-md`}>
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="text-[11px] font-black px-2 py-0.5 rounded-md bg-white/60">
-                                {formatTime12h(schedule.start_time)}
-                              </span>
-                            </div>
-                            <p className="font-bold text-sm mb-1">{schedule.title}</p>
-                            <div className="flex items-center gap-1 text-[10px] opacity-80">
-                              <Users size={10} />
-                              <span className="font-bold">{occupied}/{schedule.capacity}</span>
-                            </div>
-                            {schedule.location && (
-                              <div className="flex items-center gap-1 text-[10px] opacity-80 mt-1">
-                                <MapPin size={10} />
-                                <span className="truncate">{schedule.location}</span>
+                <div className="relative">
+                  <ScrollArea className="h-[350px] pr-1 sm:pr-4 sm:-mr-4">
+                    <div className="space-y-3 pb-14">
+                      {selectedDateSchedules.map(schedule => {
+                        const occupied = schedule.bookings?.filter(b => b.status === "confirmed").length || 0;
+                        return (
+                          <Link
+                            key={schedule.id}
+                            href={`${scheduleLinkBasePath}/${schedule.id}`}
+                            className="block group"
+                          >
+                            <div className={`rounded-xl p-3 border ${getStatusColor(schedule)} transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] cursor-pointer`}>
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-[11px] font-black px-2 py-0.5 rounded-md bg-white/60">
+                                  {formatTime12h(schedule.start_time)}
+                                </span>
                               </div>
-                            )}
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
+                              <p className="font-bold text-sm mb-1">{schedule.title}</p>
+                              <div className="flex items-center gap-1 text-[10px] opacity-80">
+                                <Users size={10} />
+                                <span className="font-bold">{occupied}/{schedule.capacity}</span>
+                              </div>
+                              {schedule.location && (
+                                <div className="flex items-start gap-1 text-[10px] opacity-80 mt-1 min-w-0">
+                                  <MapPin size={10} className="shrink-0" />
+                                  <span className="flex-1 min-w-0 leading-snug break-words">{schedule.location}</span>
+                                </div>
+                              )}
+                              <div className="mt-2 flex justify-end">
+                                <span className="inline-flex items-center rounded-md border border-primary/30 bg-white/70 px-2 py-0.5 text-[10px] font-bold text-primary">
+                                  Tap to view
+                                </span>
+                              </div>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
+                  {selectedDateSchedules.length > 2 && (
+                    <>
+                      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-14 bg-gradient-to-t from-white to-transparent rounded-b-2xl" />
+                      <div className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-full bg-white/95 border border-border/60 px-2 py-0.5 shadow-sm">
+                        <ChevronDown size={12} className="text-muted-foreground" />
+                        <span className="text-[10px] font-medium text-muted-foreground">Scroll for more</span>
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
             </motion.div>
           )}
@@ -207,7 +225,7 @@ export function ScheduleCalendar({
       </div>
 
       {/* Main Calendar Grid */}
-      <div className="flex-1 bg-white rounded-2xl shadow-sm border border-border/30 overflow-hidden">
+      <div className="flex-1 bg-white rounded-2xl shadow-sm border border-border/30 overflow-hidden order-1 lg:order-2">
         {/* Month Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/30">
           <div className="flex items-center gap-4">
@@ -236,6 +254,11 @@ export function ScheduleCalendar({
             Today
           </button>
         </div>
+        <div className="sm:hidden px-4 py-2 border-b border-border/20 bg-emerald-50/40">
+          <p className="text-[10px] font-semibold text-emerald-700">
+            Tip: Tap dates with green dots to view sessions below.
+          </p>
+        </div>
 
         {/* Week Day Headers */}
         <div className="grid grid-cols-7 border-b border-border/30">
@@ -254,14 +277,24 @@ export function ScheduleCalendar({
             const inMonth = isSameMonth(day, currentMonth);
             const isSelected = selectedDate && isSameDay(day, selectedDate);
             const isTodayDate = isToday(day);
-            const maxVisible = 2;
+            const desktopMaxVisible = 2;
 
             return (
               <button
                 key={idx}
-                onClick={() => setSelectedDate(day)}
+                onClick={() => {
+                  setSelectedDate(day);
+                  if (inMonth && daySchedules.length > 0) {
+                    requestAnimationFrame(() => {
+                      selectedDayDetailRef.current?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "nearest",
+                      });
+                    });
+                  }
+                }}
                 className={`
-                  relative min-h-[90px] sm:min-h-[110px] p-1.5 sm:p-2 border-b border-r border-border/20 text-left transition-colors
+                  relative min-h-[72px] sm:min-h-[96px] p-1.5 sm:p-2 border-b border-r border-border/20 text-left transition-colors
                   ${!inMonth ? "bg-muted/20" : "hover:bg-primary/[0.02]"}
                   ${isSelected ? "bg-primary/5 ring-1 ring-primary/20" : ""}
                 `}
@@ -278,22 +311,22 @@ export function ScheduleCalendar({
                 {/* Schedule Chips */}
                 {inMonth && daySchedules.length > 0 && (
                   <div className="space-y-0.5 mt-0.5">
-                    {daySchedules.slice(0, maxVisible).map(s => {
+                    {daySchedules.slice(0, desktopMaxVisible).map(s => {
                       const occ = s.bookings?.filter(b => b.status === "confirmed").length || 0;
                       return (
                         <div
-                          key={s.id}
-                          className={`rounded-md px-1.5 py-0.5 text-[9px] sm:text-[10px] font-bold border truncate ${getStatusColor(s)}`}
+                          key={`desktop-${s.id}`}
+                          className={`hidden sm:block rounded-md px-1.5 py-0.5 text-[10px] font-bold border truncate ${getStatusColor(s)}`}
                         >
-                          <span className="hidden sm:inline">{formatTime12h(s.start_time)} </span>
+                          <span>{formatTime12h(s.start_time)} </span>
                           {s.title}
                           <span className="ml-1 opacity-60">{occ}/{s.capacity}</span>
                         </div>
                       );
                     })}
-                    {daySchedules.length > maxVisible && (
-                      <div className="text-[9px] font-bold text-primary pl-1">
-                        +{daySchedules.length - maxVisible} more
+                    {daySchedules.length > desktopMaxVisible && (
+                      <div className="hidden sm:block text-[9px] font-bold text-primary pl-1">
+                        +{daySchedules.length - desktopMaxVisible} more
                       </div>
                     )}
                   </div>
@@ -302,9 +335,9 @@ export function ScheduleCalendar({
                 {/* Dot indicators on mobile for days with schedules */}
                 {inMonth && daySchedules.length > 0 && (
                   <div className="flex gap-0.5 mt-1 sm:hidden justify-center">
-                    {daySchedules.slice(0, 3).map(s => (
-                      <div key={s.id} className={`w-1.5 h-1.5 rounded-full ${getDotColor(s)}`} />
-                    ))}
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                   </div>
                 )}
               </button>
