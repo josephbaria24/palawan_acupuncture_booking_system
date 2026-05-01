@@ -216,16 +216,16 @@ export default function AdminSchedules() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Schedules</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Schedules</h1>
           <p className="text-muted-foreground mt-1 text-sm font-medium">Manage your clinic's availability.</p>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <AdminCalendarSyncDialog />
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-[#593f31] hover:bg-[#593f31]/90 text-white rounded-xl shadow-lg border-none px-6">
+              <Button className="h-10 sm:h-11 bg-[#593f31] hover:bg-[#593f31]/90 text-white rounded-xl shadow-lg border-none px-4 sm:px-6 text-sm">
                 <Plus size={18} className="mr-2" /> New Schedule
               </Button>
             </DialogTrigger>
@@ -462,65 +462,69 @@ export default function AdminSchedules() {
       </div>
 
       {/* Filters and Search */}
-      <div className="flex flex-col sm:flex-row gap-4 w-full">
-        <div className="relative w-full shadow-sm rounded-2xl overflow-hidden bg-white border border-border/40">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-            <Search size={20} className="text-muted-foreground/60" />
+      <div className="flex flex-col gap-2 sm:gap-4 w-full">
+        {viewMode === "list" && (
+          <div className="relative w-full shadow-sm rounded-2xl overflow-hidden bg-white border border-border/40">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+              <Search size={20} className="text-muted-foreground/60" />
+            </div>
+            <Input
+              type="text"
+              placeholder="Search by title or date (YYYY-MM-DD)..."
+              className="w-full border-none bg-transparent h-10 sm:h-auto sm:py-6 pl-12 pr-4 text-sm font-medium focus-visible:ring-0 rounded-none shadow-none"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-          <Input
-            type="text"
-            placeholder="Search by title or date (YYYY-MM-DD)..."
-            className="w-full border-none bg-transparent py-6 pl-12 pr-4 text-sm font-medium focus-visible:ring-0 rounded-none shadow-none"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-        <div className="flex gap-4 w-full sm:w-auto">
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[150px] bg-white border-border/40 h-12 rounded-2xl px-4 py-6 font-bold shadow-sm">
-              <Filter size={16} className="text-muted-foreground/60 mr-2 shrink-0" />
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent className="rounded-2xl border-border/40 shadow-xl">
-              <SelectItem value="all" className="font-bold">All Status</SelectItem>
-              <SelectItem value="open" className="font-bold text-emerald-600">Open Only</SelectItem>
-              <SelectItem value="full" className="font-bold text-red-600">Full Only</SelectItem>
-              <SelectItem value="closed" className="font-bold text-gray-500">Closed</SelectItem>
-            </SelectContent>
-          </Select>
+        )}
+        <div className="space-y-2">
+          {/* <div className="flex flex-nowrap items-center gap-2 w-full overflow-x-auto pb-1">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[140px] sm:w-[150px] bg-white border-border/40 h-9 sm:h-12 rounded-xl sm:rounded-2xl px-3 py-2 sm:py-6 text-xs sm:text-sm font-bold shadow-sm shrink-0">
+                <Filter size={16} className="text-muted-foreground/60 mr-2 shrink-0" />
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent className="rounded-2xl border-border/40 shadow-xl">
+                <SelectItem value="all" className="font-bold">All Status</SelectItem>
+                <SelectItem value="open" className="font-bold text-emerald-600">Open Only</SelectItem>
+                <SelectItem value="full" className="font-bold text-red-600">Full Only</SelectItem>
+                <SelectItem value="closed" className="font-bold text-gray-500">Closed</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <Select value={sortOrder} onValueChange={setSortOrder}>
-            <SelectTrigger className="w-full sm:w-[160px] bg-white border-border/40 h-12 rounded-2xl px-4 py-6 font-bold shadow-sm">
-              <CalendarIcon size={16} className="text-muted-foreground/60 mr-2 shrink-0" />
-              <SelectValue placeholder="Sort" />
-            </SelectTrigger>
-            <SelectContent className="rounded-2xl border-border/40 shadow-xl">
-              <SelectItem value="asc" className="font-bold">Soonest First</SelectItem>
-              <SelectItem value="desc" className="font-bold">Latest First</SelectItem>
-            </SelectContent>
-          </Select>
+            <Select value={sortOrder} onValueChange={setSortOrder}>
+              <SelectTrigger className="w-[150px] sm:w-[160px] bg-white border-border/40 h-9 sm:h-12 rounded-xl sm:rounded-2xl px-3 py-2 sm:py-6 text-xs sm:text-sm font-bold shadow-sm shrink-0">
+                <CalendarIcon size={16} className="text-muted-foreground/60 mr-2 shrink-0" />
+                <SelectValue placeholder="Sort" />
+              </SelectTrigger>
+              <SelectContent className="rounded-2xl border-border/40 shadow-xl">
+                <SelectItem value="asc" className="font-bold">Soonest First</SelectItem>
+                <SelectItem value="desc" className="font-bold">Latest First</SelectItem>
+              </SelectContent>
+            </Select>
+          </div> */}
 
-          <div className="flex items-center bg-white border border-border/40 rounded-2xl p-1 shadow-sm">
+          <div className="flex items-center bg-white border border-border/40 rounded-xl sm:rounded-2xl p-1 shadow-sm w-fit">
             <button
               onClick={() => setViewMode("calendar")}
-              className={`h-10 px-3 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors ${
+              className={`h-8 sm:h-10 px-2.5 sm:px-3 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold flex items-center gap-1 sm:gap-1.5 transition-colors ${
                 viewMode === "calendar"
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-secondary/50"
               }`}
             >
-              <CalendarDays size={14} />
+              <CalendarDays size={13} className="sm:size-[14px]" />
               Calendar
             </button>
             <button
               onClick={() => setViewMode("list")}
-              className={`h-10 px-3 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors ${
+              className={`h-8 sm:h-10 px-2.5 sm:px-3 rounded-lg sm:rounded-xl text-[11px] sm:text-xs font-bold flex items-center gap-1 sm:gap-1.5 transition-colors ${
                 viewMode === "list"
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:bg-secondary/50"
               }`}
             >
-              <List size={14} />
+              <List size={13} className="sm:size-[14px]" />
               List
             </button>
           </div>
@@ -529,7 +533,7 @@ export default function AdminSchedules() {
 
       {/* Schedule Views */}
       {isLoading ? (
-        <div className="p-12 text-center text-muted-foreground font-medium">Loading schedules...</div>
+        <div className="p-10 text-center text-muted-foreground font-medium">Loading schedules...</div>
       ) : viewMode === "calendar" ? (
         <ScheduleCalendar schedules={filteredSchedules || []} isLoading={isLoading} />
       ) : (

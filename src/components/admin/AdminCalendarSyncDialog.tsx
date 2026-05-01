@@ -53,7 +53,7 @@ export function AdminCalendarSyncDialog() {
       <DialogTrigger asChild>
         <Button variant="outline" className="rounded-xl border-border/60 hover:bg-secondary/40 font-bold px-6 gap-2">
           <Calendar size={18} className="text-primary" />
-          Calendar Sync
+           Sync
         </Button>
       </DialogTrigger>
       <DialogContent className="w-[95vw] sm:max-w-[500px] rounded-[1.5rem] sm:rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl">
