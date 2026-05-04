@@ -92,6 +92,22 @@
   --shadow-soft-brown: 0 10px 40px -10px hsla(20, 36%, 28%, 0.12);
 }
 
+/* Only animate box-shadow — do not touch `transform` or it fights Tailwind
+   `-translate-x-1/2 -translate-y-1/2` and the dot drifts up-left while pulsing. */
+@keyframes pain-marker-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 6px 2px rgb(248 113 113 / 0.95),
+      0 0 16px 6px rgb(220 38 38 / 0.45);
+  }
+  50% {
+    box-shadow:
+      0 0 14px 5px rgb(248 113 113 / 1),
+      0 0 28px 12px rgb(220 38 38 / 0.6);
+  }
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -115,5 +131,18 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  .animate-pain-marker-highlight {
+    animation: pain-marker-pulse 1.1s ease-in-out infinite;
+    transform-origin: center;
+  }
+}
+
+/* Sileo (https://sileo.aaryan.design/): top-center + dark toaster — readable copy on near-black fill */
+[data-sileo-viewport][data-theme="dark"] [data-sileo-description] {
+  color: rgb(255 255 255 / 0.72) !important;
+}
+[data-sileo-viewport][data-theme="dark"] [data-sileo-title] {
+  color: rgb(255 255 255 / 0.95) !important;
 }
 

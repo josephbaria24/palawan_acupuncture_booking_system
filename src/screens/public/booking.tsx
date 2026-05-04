@@ -29,7 +29,7 @@ import { format } from "date-fns";
 import { formatTime12h } from "@/utils/time";
 import { downloadIcsFile, generateGoogleCalendarUrl } from "@/utils/calendar";
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import Link from "next/link";
 import { PublicLayout } from "@/components/layout/public-layout";
 

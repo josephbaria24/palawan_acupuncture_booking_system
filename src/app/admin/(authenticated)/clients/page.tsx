@@ -28,6 +28,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { formatTime12h } from "@/utils/time";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { ClientIntakeForms } from "@/components/admin/ClientIntakeForms";
 
 export default function AdminClients() {
   const { data: bookings, isLoading } = useAllBookings();
@@ -39,18 +40,21 @@ export default function AdminClients() {
 
     const grouped = bookings.reduce((acc, booking) => {
       const email = booking.email ? booking.email.toLowerCase().trim() : "";
-      const groupKey = email || `${booking.client_name.toLowerCase().trim()}-${booking.phone.trim()}`;
-      
-      if (!acc[groupKey]) {
-        acc[groupKey] = {
-          id: groupKey,
-          name: booking.client_name,
+      const name = (booking.client_name || "").trim();
+      const phone = (booking.phone || "").trim();
+      const contactKey =
+        email || (name && phone ? `${name.toLowerCase()}-${phone}` : `booking:${booking.id}`);
+
+      if (!acc[contactKey]) {
+        acc[contactKey] = {
+          id: contactKey,
+          name: booking.client_name || "Unknown",
           email: booking.email || "No Email",
-          phone: booking.phone,
-          bookings: []
+          phone: booking.phone || "",
+          bookings: [],
         };
       }
-      acc[groupKey].bookings.push(booking);
+      acc[contactKey].bookings.push(booking);
       return acc;
     }, {} as Record<string, any>);
 
@@ -76,7 +80,12 @@ export default function AdminClients() {
   }
 
   return (
-    <div className="space-y-8 pb-12 max-w-5xl mx-auto">
+    <div
+      className={cn(
+        "max-w-5xl mx-auto pb-12",
+        expandedClientId ? "flex min-h-0 flex-1 flex-col space-y-4 md:space-y-6" : "space-y-8",
+      )}
+    >
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -104,7 +113,12 @@ export default function AdminClients() {
       </div>
 
       {/* Client List */}
-      <div className="grid grid-cols-1 gap-4">
+      <div
+        className={cn(
+          "grid min-h-0 grid-cols-1 gap-4",
+          expandedClientId && "flex-1",
+        )}
+      >
         {filteredClients.length === 0 ? (
           <div className="p-12 text-center bg-white rounded-[2rem] border border-dashed border-border/60">
             <div className="w-16 h-16 bg-muted/30 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -118,14 +132,16 @@ export default function AdminClients() {
             <div 
               key={client.id}
               className={cn(
-                "group bg-white border border-border/40 rounded-[1.75rem] transition-all duration-300 overflow-hidden",
-                expandedClientId === client.id ? "ring-2 ring-primary/20 shadow-xl shadow-primary/5" : "hover:shadow-lg hover:shadow-black/5"
+                "group overflow-hidden rounded-[1.75rem] border border-border/40 bg-white transition-all duration-300",
+                expandedClientId === client.id
+                  ? "flex min-h-[calc(100dvh-10.5rem)] flex-1 flex-col ring-2 ring-primary/20 shadow-xl shadow-primary/5 md:min-h-[calc(100dvh-6.25rem)]"
+                  : "hover:shadow-lg hover:shadow-black/5",
               )}
             >
               {/* Client Summary Row */}
               <button 
                 onClick={() => setExpandedClientId(expandedClientId === client.id ? null : client.id)}
-                className="w-full text-left p-5 md:p-6 flex items-center gap-4 focus:outline-none"
+                className="flex w-full shrink-0 items-center gap-4 p-5 text-left focus:outline-none md:p-6"
               >
                 <div className="w-12 h-12 rounded-2xl bg-secondary/50 flex items-center justify-center text-primary font-bold text-lg border border-secondary shadow-sm shrink-0">
                   {client.name.charAt(0)}
@@ -163,15 +179,15 @@ export default function AdminClients() {
               <AnimatePresence>
                 {expandedClientId === client.id && (
                   <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                    className="border-t border-border/40 bg-muted/5"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="flex min-h-0 flex-1 flex-col overflow-x-hidden border-t border-border/40 bg-muted/5"
                   >
-                    <div className="p-6 md:p-8 space-y-8">
+                    <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden p-6 md:p-8">
                       {/* Detailed Info Cards */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid shrink-0 grid-cols-1 gap-4 md:grid-cols-2">
                         <div className="p-5 rounded-3xl bg-white border border-border/40 shadow-sm shadow-black/[0.02]">
                           <div className="flex items-center gap-3 mb-4">
                             <div className="p-2 bg-blue-500/10 text-blue-600 rounded-lg">
@@ -212,14 +228,24 @@ export default function AdminClients() {
                         </div>
                       </div>
 
+                      <div className="shrink-0">
+                        <ClientIntakeForms
+                          isActive={expandedClientId === client.id}
+                          clientKey={client.id}
+                          clientName={client.name}
+                          phone={client.phone}
+                          email={client.email}
+                        />
+                      </div>
+
                       {/* Timeline */}
                       <div className="space-y-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex shrink-0 items-center justify-between">
                           <h4 className="text-[11px] font-black uppercase tracking-widest text-muted-foreground/70 ml-1">Booking History</h4>
                           <span className="text-[10px] font-bold text-muted-foreground px-2 py-0.5 bg-muted/50 rounded-full">Sorted by newest</span>
                         </div>
 
-                        <div className="space-y-3">
+                        <div className="space-y-3 pr-1">
                           {client.bookings.map((booking: any) => (
                             <div 
                               key={booking.id}

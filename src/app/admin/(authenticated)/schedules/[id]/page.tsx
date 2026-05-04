@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useEffect, useState, useRef } from "react";
 import QRCode from "react-qr-code";
 import { toPng } from "html-to-image";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { downloadIcsFile, generateGoogleCalendarUrl } from "@/utils/calendar";

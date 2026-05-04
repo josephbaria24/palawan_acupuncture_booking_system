@@ -9,7 +9,6 @@ import { format } from "date-fns";
 import { formatTime12h } from "@/utils/time";
 import { downloadIcsFile, generateGoogleCalendarUrl } from "@/utils/calendar";
 import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
 import { 
   Calendar, 
   Clock, 

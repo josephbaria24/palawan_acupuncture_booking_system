@@ -14,7 +14,7 @@ import {
   CalendarCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { toast } from "@/lib/toast";
 import { supabase } from "@/lib/supabase";
 
 interface CalendarSyncCardProps {

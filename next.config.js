@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Avoid intermittent dev errors: "SegmentViewNode" missing from React Client Manifest /
+  // __webpack_modules__[moduleId] is not a function (stale HMR + segment explorer on Windows).
+  experimental: {
+    devtoolSegmentExplorer: false,
+  },
   async redirects() {
     return [
       {

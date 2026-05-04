@@ -184,12 +184,12 @@ export function AdminLayout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto p-4 md:p-8">
+        <div className="flex min-h-0 flex-1 flex-col overflow-auto p-4 md:p-8">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="max-w-6xl mx-auto"
+            className="mx-auto flex min-h-0 w-full max-w-6xl flex-1 flex-col"
           >
             {children}
           </motion.div>

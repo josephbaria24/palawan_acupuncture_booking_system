@@ -60,13 +60,13 @@ export async function GET(req: NextRequest) {
 
     if (fetchError) throw fetchError;
 
-    // 3. Decrypt sensitive fields for each booking
-    const decryptedBookings = bookings.map(booking => ({
+    // 3. Decrypt sensitive fields for each booking (empty string if key mismatch / corrupt)
+    const decryptedBookings = bookings.map((booking) => ({
       ...booking,
-      client_name: decrypt(booking.client_name),
-      phone: decrypt(booking.phone),
-      email: decrypt(booking.email),
-      notes: decrypt(booking.notes),
+      client_name: decrypt(String(booking.client_name ?? "")),
+      phone: decrypt(String(booking.phone ?? "")),
+      email: decrypt(String(booking.email ?? "")),
+      notes: decrypt(String(booking.notes ?? "")),
     }));
 
     return NextResponse.json(decryptedBookings);

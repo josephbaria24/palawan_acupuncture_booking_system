@@ -32,27 +32,32 @@ export function encrypt(text: string): string {
 
 /**
  * Decrypts text previously encrypted with the above encrypt() function.
+ * Returns empty string on failure (wrong key, corrupt ciphertext) so callers do not
+ * propagate placeholder text into URLs or grouping keys. Legacy plaintext rows
+ * (no iv:tag:data shape) are returned unchanged.
  */
 export function decrypt(hash: string): string {
-  if (!hash || !hash.includes(':')) return hash; // Return as is if not our format
-  
+  if (hash == null || hash === "") return "";
+  if (!hash.includes(":")) return hash;
+
   try {
-    const [ivHex, authTagHex, encryptedHex] = hash.split(':');
-    
+    const [ivHex, authTagHex, encryptedHex] = hash.split(":");
     if (!ivHex || !authTagHex || !encryptedHex) return hash;
 
-    const iv = Buffer.from(ivHex, 'hex');
-    const authTag = Buffer.from(authTagHex, 'hex');
+    const iv = Buffer.from(ivHex, "hex");
+    const authTag = Buffer.from(authTagHex, "hex");
     const decipher = crypto.createDecipheriv(ALGORITHM, KEY, iv);
-    
+
     decipher.setAuthTag(authTag);
-    
-    let decrypted = decipher.update(encryptedHex, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    
+
+    let decrypted = decipher.update(encryptedHex, "hex", "utf8");
+    decrypted += decipher.final("utf8");
+
     return decrypted;
-  } catch (error) {
-    console.error('Decryption failed. Data might be corrupted or key mismatched.', error);
-    return '[ENCRYPTED DATA]'; // Return placeholder on failure
+  } catch {
+    if (process.env.NODE_ENV === "development") {
+      console.warn("[encryption] decrypt failed (wrong ENCRYPTION_KEY, corrupt row, or legacy data).");
+    }
+    return "";
   }
 }
