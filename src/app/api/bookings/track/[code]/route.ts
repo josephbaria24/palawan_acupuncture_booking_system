@@ -27,27 +27,18 @@ export async function GET(
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
     }
 
-    // Decrypt and then Mask sensitive data before sending to the public client
+    // Decrypt data before sending to the client
     const decryptedName = decrypt(booking.client_name);
-    
-    const maskName = (name: string) => {
-      if (!name) return "";
-      const parts = name.split(" ");
-      const mask = (str: string) => {
-        if (str.length <= 2) return str[0] + "*";
-        return str[0] + "***" + str[str.length - 1];
-      };
-      if (parts.length === 1) return mask(parts[0]);
-      return `${mask(parts[0])} ${mask(parts[parts.length - 1])}`;
-    };
+    const decryptedPhone = decrypt(booking.phone);
+    const decryptedEmail = decrypt(booking.email);
+    const decryptedNotes = decrypt(booking.notes);
 
     return NextResponse.json({
       ...booking,
-      client_name: maskName(decryptedName),
-      // We don't return phone or email to the public tracking page at all for privacy
-      phone: "********", 
-      email: "********",
-      notes: booking.notes ? "Confidential" : "" 
+      client_name: decryptedName,
+      phone: decryptedPhone, 
+      email: decryptedEmail,
+      notes: decryptedNotes
     });
   } catch (error: any) {
     console.error("Public tracking fetch failed:", error);

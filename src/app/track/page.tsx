@@ -37,32 +37,32 @@ export default function TrackPage() {
             </div>
             
             <div className="space-y-2">
-              <h1 className="text-4xl md:text-5xl font-display font-black tracking-tight text-foreground">
+              <h1 className="text-3xl md:text-5xl font-display font-black tracking-tight text-foreground">
                 Track your session
               </h1>
-              <p className="text-muted-foreground text-lg">
+              <p className="text-muted-foreground text-sm md:text-lg">
                 Enter your booking reference code (e.g. PA-XXXXXX) to view your status.
               </p>
             </div>
 
-            <form onSubmit={handleSearch} className="mt-10 relative">
+            <form onSubmit={handleSearch} className="mt-6 md:mt-10 relative">
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                  <ShieldCheck className="text-muted-foreground/50 group-focus-within:text-primary transition-colors" size={24} />
+                <div className="absolute inset-y-0 left-0 pl-4 md:pl-5 flex items-center pointer-events-none">
+                  <ShieldCheck className="text-muted-foreground/50 group-focus-within:text-primary transition-colors" size={20} className="md:size-6" />
                 </div>
                 <Input
                   type="text"
                   placeholder="PA-XXXXXX"
                   value={refCode}
                   onChange={(e) => setRefCode(e.target.value.toUpperCase())}
-                  className="h-16 pl-14 pr-32 rounded-2xl text-xl font-bold tracking-widest bg-white/60 backdrop-blur-xl border-border/50 focus-visible:ring-primary/20 shadow-xl shadow-black/[0.02]"
+                  className="h-14 md:h-16 pl-12 md:pl-14 pr-28 md:pr-32 rounded-xl md:rounded-2xl text-lg md:text-xl font-bold tracking-widest bg-white/60 backdrop-blur-xl border-border/50 focus-visible:ring-primary/20 shadow-xl shadow-black/[0.02]"
                 />
                 <Button 
                   type="submit"
                   disabled={refCode.trim().length < 6}
-                  className="absolute right-2 top-2 h-12 px-6 rounded-xl font-bold text-sm bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2"
+                  className="absolute right-1.5 md:right-2 top-1.5 md:top-2 h-11 md:h-12 px-4 md:px-6 rounded-lg md:rounded-xl font-bold text-xs md:text-sm bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2"
                 >
-                  Track <ArrowRight size={16} />
+                  Track <ArrowRight size={14} className="md:size-4" />
                 </Button>
               </div>
             </form>

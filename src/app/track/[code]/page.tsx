@@ -9,13 +9,13 @@ import { format } from "date-fns";
 import { formatTime12h } from "@/utils/time";
 import { downloadIcsFile, generateGoogleCalendarUrl } from "@/utils/calendar";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Calendar, 
-  Clock, 
-  User, 
-  CheckCircle2, 
-  CircleDashed, 
-  XCircle, 
+import {
+  Calendar,
+  Clock,
+  User,
+  CheckCircle2,
+  CircleDashed,
+  XCircle,
   ArrowLeft,
   MapPin,
   Leaf,
@@ -67,7 +67,7 @@ export default function TrackResultPage() {
               We couldn't find any booking with reference <span className="font-bold text-foreground underline decoration-primary/30">{code}</span>. Please double-check your code and try again.
             </p>
           </div>
-          <Button 
+          <Button
             onClick={() => router.push("/track")}
             className="rounded-2xl h-14 px-8 bg-foreground hover:bg-foreground/90 font-bold transition-all flex items-center gap-2"
           >
@@ -89,118 +89,115 @@ export default function TrackResultPage() {
     { label: "Confirmed", completed: isConfirmed, active: isConfirmed, icon: <ShieldCheck size={16} /> },
   ];
 
-  const maskedName = booking.client_name;
+  const clientName = booking.client_name;
 
   return (
     <PublicLayout>
-      <div className="max-w-3xl mx-auto px-4 py-8 md:py-16 space-y-8 md:space-y-12">
-        
+      <div className="max-w-3xl mx-auto px-4 py-6 md:py-16 space-y-6 md:space-y-12">
+
         {/* Header and Back Button */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest">
-              <ShieldCheck size={14} /> Tracking Details
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
+          <div className="space-y-1 md:space-y-2">
+            <div className="flex items-center gap-2 text-primary font-bold text-[10px] md:text-xs uppercase tracking-widest">
+              <ShieldCheck size={12} className="md:size-[14px]" /> Tracking Details
             </div>
-            <h1 className="text-3xl md:text-5xl font-display font-black tracking-tighter">
-              Session for {maskedName}
+            <h1 className="text-2xl md:text-5xl font-display font-black tracking-tighter">
+              Session for {clientName}
             </h1>
           </div>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={() => router.push("/track")}
-            className="rounded-xl hover:bg-secondary/40 text-muted-foreground hover:text-foreground h-11 px-4 gap-2 border border-border/40 w-fit"
+            className="rounded-xl hover:bg-secondary/40 text-muted-foreground hover:text-foreground h-9 md:h-11 px-3 md:px-4 gap-2 border border-border/40 w-fit text-xs md:text-sm"
           >
-            <Search size={16} /> Track another
+            <Search size={14} className="md:size-4" /> Track another
           </Button>
         </div>
 
         {/* Status Stepper */}
-        <div className="bg-card border border-border/40 rounded-[2.5rem] p-8 md:p-10 shadow-sm">
-          <div className="flex items-center justify-between gap-4 mb-10 overflow-x-auto pb-4 scrollbar-hide">
+        <div className="bg-card border border-border/40 rounded-3xl md:rounded-[2.5rem] p-5 md:p-10 shadow-sm">
+          <div className="flex items-center justify-between gap-4 mb-6 md:mb-10 overflow-x-auto pb-4 scrollbar-hide">
             {statusSteps.map((step, index) => (
-              <div key={index} className="flex items-center gap-3 shrink-0">
-                <div className={`size-10 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${
-                  step.completed ? 'bg-primary border-primary text-white' : 
-                  step.active ? 'bg-amber-100 border-amber-500 text-amber-700 animate-pulse' : 
-                  'bg-background border-border/40 text-muted-foreground'
-                }`}>
-                  {step.completed ? <CheckCircle2 size={20} /> : step.icon}
+              <div key={index} className="flex items-center gap-2 md:gap-3 shrink-0">
+                <div className={`size-8 md:size-10 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${step.completed ? 'bg-primary border-primary text-white' :
+                  step.active ? 'bg-amber-100 border-amber-500 text-amber-700 animate-pulse' :
+                    'bg-background border-border/40 text-muted-foreground'
+                  }`}>
+                  {step.completed ? <CheckCircle2 size={16} className="md:size-5" /> : <div className="scale-75 md:scale-100">{step.icon}</div>}
                 </div>
                 <div className="flex flex-col">
-                  <span className={`text-xs font-black uppercase tracking-widest ${step.completed || step.active ? 'text-foreground' : 'text-muted-foreground'}`}>
+                  <span className={`text-[10px] md:text-xs font-black uppercase tracking-widest ${step.completed || step.active ? 'text-foreground' : 'text-muted-foreground'}`}>
                     {step.label}
                   </span>
-                  <span className="text-[10px] text-muted-foreground font-medium">Step {index + 1}</span>
+                  <span className="text-[8px] md:text-[10px] text-muted-foreground font-medium">Step {index + 1}</span>
                 </div>
                 {index < statusSteps.length - 1 && (
-                  <div className="ml-2 mr-1">
-                    <ChevronRight size={14} className="text-muted-foreground/30" />
+                  <div className="ml-1 md:ml-2 mr-1">
+                    <ChevronRight size={12} className="md:size-[14px] text-muted-foreground/30" />
                   </div>
                 )}
               </div>
             ))}
           </div>
 
-          <div className={`p-6 rounded-3xl border flex flex-col md:flex-row md:items-center justify-between gap-6 ${
-            isConfirmed ? 'bg-emerald-50/50 border-emerald-100/50' : 
-            isQueued ? 'bg-amber-50/50 border-amber-100/50' : 
-            booking.status === 'no-show' ? 'bg-orange-50/50 border-orange-100/50' :
-            'bg-red-50/50 border-red-100/50'
-          }`}>
-            <div className="flex items-start gap-5">
-              <div className={`size-14 rounded-full flex items-center justify-center shrink-0 border shadow-lg ${
-                isConfirmed ? 'bg-emerald-500 text-white border-emerald-400' : 
-                isQueued ? 'bg-amber-500 text-white border-amber-400' : 
-                booking.status === 'no-show' ? 'bg-orange-500 text-white border-orange-400' :
-                'bg-red-500 text-white border-red-400'
-              }`}>
-                {isConfirmed ? <CheckCircle2 size={28} /> : isQueued ? <CircleDashed size={28} className="animate-spin" /> : 
-                 booking.status === 'no-show' ? <XCircle size={28} /> : <XCircle size={28} />}
+          <div className={`p-4 md:p-6 rounded-2xl md:rounded-3xl border flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 ${isConfirmed ? 'bg-emerald-50/50 border-emerald-100/50' :
+            isQueued ? 'bg-amber-50/50 border-amber-100/50' :
+              booking.status === 'no-show' ? 'bg-orange-50/50 border-orange-100/50' :
+                'bg-red-50/50 border-red-100/50'
+            }`}>
+            <div className="flex items-start gap-4 md:gap-5">
+              <div className={`size-12 md:size-14 rounded-full flex items-center justify-center shrink-0 border shadow-lg ${isConfirmed ? 'bg-emerald-500 text-white border-emerald-400' :
+                isQueued ? 'bg-amber-500 text-white border-amber-400' :
+                  booking.status === 'no-show' ? 'bg-orange-500 text-white border-orange-400' :
+                    'bg-red-500 text-white border-red-400'
+                }`}>
+                {isConfirmed ? <CheckCircle2 size={24} className="md:size-28" /> : isQueued ? <CircleDashed size={24} className="md:size-28 animate-spin" /> :
+                  booking.status === 'no-show' ? <XCircle size={24} className="md:size-28" /> : <XCircle size={24} className="md:size-28" />}
               </div>
               <div className="space-y-1">
-                <h2 className="text-xl font-bold tracking-tight">
+                <h2 className="text-lg md:text-xl font-bold tracking-tight">
                   Status: {isConfirmed ? 'Confirmed' : isQueued ? 'Waitlisted / Pending' : booking.status === 'no-show' ? 'No Show' : 'Cancelled'}
                 </h2>
-                <p className="text-sm text-muted-foreground font-medium leading-relaxed max-w-sm">
-                  {isConfirmed ? "Grateful to have you! Your appointment is locked and ready. See you at the clinic soon." : 
-                   isQueued ? "You are on the waitlist. We will notify you immediately if a spot becomes available and your booking is confirmed." : 
-                   booking.status === 'no-show' ? "This session was marked as a no-show. Please follow clinic policies or contact us for more information." :
-                   "This session was cancelled. Please contact us for more information."}
+                <p className="text-xs md:text-sm text-muted-foreground font-medium leading-relaxed max-w-sm">
+                  {isConfirmed ? "Grateful to have you! Your appointment is locked and ready. See you at the clinic soon." :
+                    isQueued ? "You are on the waitlist. We will notify you immediately if a spot becomes available and your booking is confirmed." :
+                      booking.status === 'no-show' ? "This session was marked as a no-show. Please follow clinic policies or contact us for more information." :
+                        "This session was cancelled. Please contact us for more information."}
                 </p>
               </div>
             </div>
-            <div className="flex flex-col items-center justify-center text-center p-4 rounded-2xl bg-white border border-border/40 shadow-sm min-w-[140px]">
-              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Reference</span>
-              <span className="text-lg font-black tracking-widest text-[#B79A7E]">{code}</span>
+            <div className="flex flex-col items-center justify-center text-center p-3 md:p-4 rounded-xl md:rounded-2xl bg-white border border-border/40 shadow-sm min-w-[120px] md:min-w-[140px]">
+              <span className="text-[9px] md:text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Reference</span>
+              <span className="text-base md:text-lg font-black tracking-widest text-[#B79A7E]">{code}</span>
             </div>
           </div>
         </div>
 
         {/* Details Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-          
+
           {/* Appointment Card */}
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-card border border-border/40 rounded-[2.5rem] p-8 shadow-sm space-y-8"
+            className="bg-card border border-border/40 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 shadow-sm space-y-6 md:space-y-8"
           >
             <div className="flex items-center gap-3">
-              <div className="size-10 rounded-2xl bg-secondary/30 flex items-center justify-center text-primary border border-secondary/40 shadow-sm">
-                <Calendar size={20} />
+              <div className="size-8 md:size-10 rounded-xl md:rounded-2xl bg-secondary/30 flex items-center justify-center text-primary border border-secondary/40 shadow-sm">
+                <Calendar size={18} className="md:size-5" />
               </div>
-              <h3 className="text-lg font-bold">Appointment details</h3>
+              <h3 className="text-base md:text-lg font-bold">Appointment details</h3>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-14 bg-primary text-white rounded-2xl flex flex-col items-center justify-center shrink-0 shadow-lg shadow-primary/10">
-                  <span className="text-[9px] uppercase font-bold tracking-widest">{format(new Date(schedule.date), 'MMM')}</span>
-                  <span className="text-xl font-black">{format(new Date(schedule.date), 'dd')}</span>
+                <div className="w-10 md:w-12 h-12 md:h-14 bg-primary text-white rounded-xl md:rounded-2xl flex flex-col items-center justify-center shrink-0 shadow-lg shadow-primary/10">
+                  <span className="text-[8px] md:text-[9px] uppercase font-bold tracking-widest">{format(new Date(schedule.date), 'MMM')}</span>
+                  <span className="text-lg md:text-xl font-black">{format(new Date(schedule.date), 'dd')}</span>
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Session</p>
-                  <p className="text-base font-bold text-foreground leading-tight">{schedule.title}</p>
+                  <p className="text-[9px] md:text-[10px] font-black text-muted-foreground uppercase tracking-widest">Session</p>
+                  <p className="text-sm md:text-base font-bold text-foreground leading-tight">{schedule.title}</p>
                 </div>
               </div>
 
@@ -229,19 +226,19 @@ export default function TrackResultPage() {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.1 }}
-            className="bg-secondary/10 border border-secondary/30 rounded-[2.5rem] p-8 space-y-8"
+            className="bg-secondary/10 border border-secondary/30 rounded-3xl md:rounded-[2.5rem] p-6 md:p-8 space-y-4 md:space-y-6"
           >
             <div className="flex items-center gap-3">
-              <div className="size-10 rounded-2xl bg-white/60 flex items-center justify-center text-[#B79A7E] border border-white/50 shadow-sm">
-                <User size={20} />
+              <div className="size-8 md:size-10 rounded-xl md:rounded-2xl bg-white/60 flex items-center justify-center text-[#B79A7E] border border-white/50 shadow-sm">
+                <User size={18} className="md:size-5" />
               </div>
-              <h3 className="text-lg font-bold">Patient profile</h3>
+              <h3 className="text-base md:text-lg font-bold">Patient profile</h3>
             </div>
 
-            <div className="space-y-4">
-              <div className="p-4 rounded-2xl bg-white/45 border border-white/60">
-                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Full name</p>
-                <p className="font-bold text-base">{maskedName}</p>
+            <div className="space-y-3 md:space-y-4">
+              <div className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-white/45 border border-white/60">
+                <p className="text-[9px] md:text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Full name</p>
+                <p className="font-bold text-sm md:text-base">{clientName}</p>
               </div>
               <div className="p-4 rounded-2xl bg-white/45 border border-white/60">
                 <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Clinic Policy</p>
@@ -256,17 +253,17 @@ export default function TrackResultPage() {
 
         {/* Calendar Sync Section */}
         {isConfirmed && (
-          <CalendarSyncCard 
-            email={booking.email} 
+          <CalendarSyncCard
+            email={booking.email}
             referenceCode={code}
-            isConfirmed={isConfirmed} 
+            isConfirmed={isConfirmed}
           />
         )}
 
         {/* Footer help */}
-        <div className="text-center pt-8 border-t border-border/20">
+        <div className="text-center pt-5 border-t border-border/20">
           <p className="text-muted-foreground text-sm">Need to cancel or reschedule?</p>
-          <p className="text-sm font-bold text-foreground mt-1">Contact us at +63 (000) 000-0000</p>
+          <p className="text-sm font-bold text-foreground mt-1">Contact us at +63-952-440-6339</p>
         </div>
 
       </div>

@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Calendar, 
-  Smartphone, 
-  Globe, 
-  Check, 
-  ArrowRight, 
-  Plus, 
+import {
+  Calendar,
+  Smartphone,
+  Globe,
+  Check,
+  ArrowRight,
+  Plus,
   Info,
   CalendarDays,
   CalendarCheck
@@ -42,7 +42,7 @@ export function CalendarSyncCard({ email, referenceCode, isConfirmed }: Calendar
           redirectTo: `${window.location.origin}/track/${referenceCode}?sync=google`
         }
       });
-      
+
       if (error) throw error;
     } catch (err: any) {
       toast.error("Failed to connect Google Calendar: " + err.message);
@@ -65,32 +65,30 @@ export function CalendarSyncCard({ email, referenceCode, isConfirmed }: Calendar
       className="relative overflow-hidden group"
     >
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/10 opacity-50 pointer-events-none" />
-      
-      <div className="glass-card rounded-[2.5rem] border border-primary/20 p-8 md:p-10 shadow-xl shadow-primary/5 relative z-10">
+
+      {/* <div className="glass-card rounded-[2.5rem] border border-primary/20 p-8 md:p-10 shadow-xl shadow-primary/5 relative z-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <div className="space-y-1">
             <h3 className="text-2xl font-display font-black tracking-tight">Sync your Calendar</h3>
             <p className="text-muted-foreground text-sm font-medium">Never miss your healing session. Auto-sync to your favorite device.</p>
           </div>
-          
+
           <div className="flex bg-secondary/30 p-1 rounded-2xl w-fit border border-secondary/40">
             <button
               onClick={() => setActiveTab("google")}
-              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                activeTab === "google" 
-                  ? "bg-white text-primary shadow-sm" 
+              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === "google"
+                  ? "bg-white text-primary shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+                }`}
             >
               Google
             </button>
             <button
               onClick={() => setActiveTab("apple")}
-              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                activeTab === "apple" 
-                  ? "bg-white text-primary shadow-sm" 
+              className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === "apple"
+                  ? "bg-white text-primary shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+                }`}
             >
               iOS / Apple
             </button>
@@ -118,9 +116,9 @@ export function CalendarSyncCard({ email, referenceCode, isConfirmed }: Calendar
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Button 
+                  <Button
                     onClick={handleGoogleSync}
                     disabled={isSyncing}
                     className="h-12 rounded-2xl bg-[#4285F4] hover:bg-[#4285F4]/90 text-white font-bold gap-2 shadow-lg shadow-[#4285F4]/20"
@@ -128,7 +126,7 @@ export function CalendarSyncCard({ email, referenceCode, isConfirmed }: Calendar
                     {isSyncing ? "Connecting..." : "Connect Google Account"}
                     <Plus size={18} />
                   </Button>
-                  <Button 
+                  <Button
                     variant="outline"
                     onClick={() => copyToClipboard(feedUrl)}
                     className="h-12 rounded-2xl border-primary/20 hover:bg-primary/5 font-bold gap-2"
@@ -137,7 +135,7 @@ export function CalendarSyncCard({ email, referenceCode, isConfirmed }: Calendar
                   </Button>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-2 px-4 py-3 rounded-2xl bg-amber-50/50 border border-amber-100 text-[10px] font-bold text-amber-800">
                 <Info size={14} className="shrink-0" />
                 <span>Tip: Copying the Sync URL allows you to add this as a 'Subscription' which updates automatically.</span>
@@ -163,9 +161,9 @@ export function CalendarSyncCard({ email, referenceCode, isConfirmed }: Calendar
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <Button 
+                  <Button
                     asChild
                     className="h-12 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold gap-2 shadow-lg shadow-black/10"
                   >
@@ -174,7 +172,7 @@ export function CalendarSyncCard({ email, referenceCode, isConfirmed }: Calendar
                       <CalendarDays size={18} />
                     </a>
                   </Button>
-                  <Button 
+                  <Button
                     variant="outline"
                     onClick={() => copyToClipboard(feedUrl)}
                     className="h-12 rounded-2xl border-primary/20 hover:bg-primary/5 font-bold gap-2"
@@ -191,7 +189,7 @@ export function CalendarSyncCard({ email, referenceCode, isConfirmed }: Calendar
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </div> */}
     </motion.div>
   );
 }
