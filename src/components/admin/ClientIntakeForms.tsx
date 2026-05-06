@@ -192,6 +192,7 @@ export function ClientIntakeForms({ isActive, clientKey, clientName, phone, emai
   const draftRestoreToastShown = useRef(false);
   const lastHydratedFingerprint = useRef<string>("");
   const lastSignatureSnapshot = useRef<string>("");
+  const lastSignatureDataUrlRef = useRef<string>("");
 
   useEffect(() => {
     setDraftReady(false);
@@ -246,6 +247,21 @@ export function ClientIntakeForms({ isActive, clientKey, clientName, phone, emai
       }
     }, signatureChanged ? 4500 : 1500); // Longer quiet window for signature updates to avoid interrupting drawing flow
     return () => window.clearTimeout(t);
+  }, [newPatient, clientKey, draftReady, isActive, isPublic]);
+
+  useEffect(() => {
+    if (!draftReady || !clientKey || !isActive) return;
+    const previous = lastSignatureDataUrlRef.current;
+    const current = newPatient.consent.signatureDataUrl || "";
+    lastSignatureDataUrlRef.current = current;
+
+    // Persist immediately when a signature is explicitly cleared so refresh won't restore old data.
+    if (previous && !current) {
+      saveIntakeDraftLocal(clientKey, "new_patient", newPatient);
+      if (isPublic) {
+        save.mutate({ clientKey, formType: "new_patient", payload: newPatient });
+      }
+    }
   }, [newPatient, clientKey, draftReady, isActive, isPublic]);
 
   useEffect(() => {
