@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -186,6 +187,198 @@ function organTone(title: string): PaperTone {
     "SKIN HEALTH": "navy",
   };
   return m[title] ?? "navy";
+}
+
+function SignatureInput({
+  value,
+  inputType,
+  fileName,
+  onChange,
+}: {
+  value: string;
+  inputType: "" | "draw" | "upload";
+  fileName: string;
+  onChange: (next: { signatureDataUrl: string; signatureInputType: "" | "draw" | "upload"; signatureFileName: string }) => void;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const drawingRef = useRef(false);
+  const lastPointRef = useRef<{ x: number; y: number } | null>(null);
+  const prevPointRef = useRef<{ x: number; y: number } | null>(null);
+  const valueRef = useRef(value);
+
+  const redrawSignature = (signatureValue: string) => {
+    const canvas = canvasRef.current;
+    const wrapper = wrapperRef.current;
+    if (!canvas || !wrapper) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const rect = wrapper.getBoundingClientRect();
+    const cssHeight = window.innerWidth < 768 ? 160 : 190;
+    ctx.clearRect(0, 0, rect.width, cssHeight);
+    if (!signatureValue) return;
+    const img = new Image();
+    img.onload = () => {
+      ctx.clearRect(0, 0, rect.width, cssHeight);
+      ctx.drawImage(img, 0, 0, rect.width, cssHeight);
+    };
+    img.src = signatureValue;
+  };
+
+  useEffect(() => {
+    valueRef.current = value;
+    redrawSignature(value);
+  }, [value]);
+
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    const canvas = canvasRef.current;
+    if (!wrapper || !canvas) return;
+    const handleResize = () => {
+      const ratio = window.devicePixelRatio || 1;
+      const rect = wrapper.getBoundingClientRect();
+      const cssHeight = window.innerWidth < 768 ? 160 : 190;
+      canvas.width = Math.max(1, Math.floor(rect.width * ratio));
+      canvas.height = Math.floor(cssHeight * ratio);
+      canvas.style.height = `${cssHeight}px`;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = "#0f2942";
+      ctx.lineWidth = 2.2;
+      ctx.imageSmoothingEnabled = true;
+      redrawSignature(valueRef.current);
+    };
+
+    handleResize();
+    const observer = new ResizeObserver(handleResize);
+    observer.observe(wrapper);
+    return () => observer.disconnect();
+  }, []);
+
+  const toCanvasPoint = (e: any) => {
+    const canvas = canvasRef.current!;
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
+  };
+
+  const startDraw = (e: any) => {
+    if (inputType !== "draw") return;
+    drawingRef.current = true;
+    const start = toCanvasPoint(e);
+    lastPointRef.current = start;
+    prevPointRef.current = start;
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const moveDraw = (e: any) => {
+    if (!drawingRef.current || inputType !== "draw") return;
+    const canvas = canvasRef.current;
+    const last = lastPointRef.current;
+    const prev = prevPointRef.current;
+    if (!canvas || !last || !prev) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const next = toCanvasPoint(e);
+    const mid1 = { x: (prev.x + last.x) / 2, y: (prev.y + last.y) / 2 };
+    const mid2 = { x: (last.x + next.x) / 2, y: (last.y + next.y) / 2 };
+    ctx.beginPath();
+    ctx.moveTo(mid1.x, mid1.y);
+    ctx.quadraticCurveTo(last.x, last.y, mid2.x, mid2.y);
+    ctx.stroke();
+    prevPointRef.current = last;
+    lastPointRef.current = next;
+  };
+
+  const endDraw = () => {
+    if (!drawingRef.current || inputType !== "draw") return;
+    drawingRef.current = false;
+    prevPointRef.current = null;
+    lastPointRef.current = null;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    onChange({
+      signatureDataUrl: canvas.toDataURL("image/png"),
+      signatureInputType: "draw",
+      signatureFileName: "",
+    });
+  };
+
+  const clearSignature = () =>
+    onChange({
+      signatureDataUrl: "",
+      signatureInputType: inputType || "",
+      signatureFileName: "",
+    });
+
+  const uploadSignature = (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      onChange({
+        signatureDataUrl: String(reader.result || ""),
+        signatureInputType: "upload",
+        signatureFileName: file.name,
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  return (
+    <div className="space-y-2 rounded-sm border border-neutral-300 bg-white p-2.5 md:p-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          variant={inputType === "draw" ? "default" : "outline"}
+          className={cn("h-8 rounded-sm px-3 text-[10px] font-bold uppercase tracking-wide", inputType === "draw" ? "bg-[#0f2942] hover:bg-[#0a1f33]" : "")}
+          onClick={() => onChange({ signatureDataUrl: "", signatureInputType: "draw", signatureFileName: "" })}
+        >
+          Draw Signature
+        </Button>
+        <label className="inline-flex">
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => uploadSignature(e.target.files?.[0] || null)}
+          />
+          <span className="inline-flex h-8 cursor-pointer items-center rounded-sm border border-input px-3 text-[10px] font-bold uppercase tracking-wide">
+            Upload Signature
+          </span>
+        </label>
+        <Button type="button" variant="outline" className="h-8 rounded-sm px-3 text-[10px] font-bold uppercase tracking-wide" onClick={clearSignature}>
+          Clear
+        </Button>
+      </div>
+      {inputType === "upload" && (
+        <p className="text-[10px] text-neutral-600">Uploaded file: {fileName || "Image selected"}</p>
+      )}
+      <div ref={wrapperRef} className="w-full">
+        <canvas
+          ref={canvasRef}
+          className={cn(
+            "w-full touch-none rounded-sm border border-dashed border-neutral-400 bg-white",
+            inputType === "draw" ? "cursor-crosshair" : "cursor-not-allowed opacity-80",
+          )}
+          onPointerDown={startDraw}
+          onPointerMove={moveDraw}
+          onPointerUp={endDraw}
+          onPointerLeave={endDraw}
+        />
+      </div>
+      <p className="text-[10px] text-neutral-600">
+        Choose <span className="font-semibold">Draw Signature</span> to sign directly (best on phone/tablet and PC), or upload a clear image of your signature.
+      </p>
+    </div>
+  );
 }
 
 export function NewPatientIntakePaperForm({
@@ -383,6 +576,23 @@ export function NewPatientIntakePaperForm({
           <div className="my-2 border-t-2 border-dashed border-neutral-700" />
           <div className="whitespace-pre-wrap px-3 pb-3 text-center text-[11px] leading-relaxed text-neutral-900">{CONSENT_SIGNATURE_BLOCK}</div>
           <div className="grid gap-3 border-t-2 border-neutral-900 bg-neutral-50 p-3 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <Label className="text-[10px] font-bold uppercase text-neutral-800">Signature</Label>
+              <SignatureInput
+                value={newPatient.consent.signatureDataUrl}
+                inputType={newPatient.consent.signatureInputType}
+                fileName={newPatient.consent.signatureFileName}
+                onChange={(next) =>
+                  setNewPatient({
+                    ...newPatient,
+                    consent: {
+                      ...newPatient.consent,
+                      ...next,
+                    },
+                  })
+                }
+              />
+            </div>
             <div className="sm:col-span-2">
               <Label className="text-[10px] font-bold uppercase text-neutral-800">Printed name (“the patient”)</Label>
               <Input className="mt-1 h-9 w-full rounded-none border-0 border-b-2 border-neutral-800 bg-transparent" value={newPatient.consent.patientPrintedName} onChange={(e) => setNewPatient({ ...newPatient, consent: { ...newPatient.consent, patientPrintedName: e.target.value } })} />

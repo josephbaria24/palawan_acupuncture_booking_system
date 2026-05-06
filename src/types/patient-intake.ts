@@ -66,6 +66,10 @@ export type NewPatientIntakePayload = {
     specialConditions: Record<string, boolean>;
     /** Printed name in the consent statement (“I … the patient”). */
     patientPrintedName: string;
+    /** Signature image stored as data URL (drawn or uploaded). */
+    signatureDataUrl: string;
+    signatureInputType: "" | "draw" | "upload";
+    signatureFileName: string;
     signerName: string;
     signerRole: string;
     signedDate: string;

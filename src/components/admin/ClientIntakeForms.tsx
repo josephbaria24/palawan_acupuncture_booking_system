@@ -191,6 +191,7 @@ export function ClientIntakeForms({ isActive, clientKey, clientName, phone, emai
   const [draftReady, setDraftReady] = useState(false);
   const draftRestoreToastShown = useRef(false);
   const lastHydratedFingerprint = useRef<string>("");
+  const lastSignatureSnapshot = useRef<string>("");
 
   useEffect(() => {
     setDraftReady(false);
@@ -227,6 +228,14 @@ export function ClientIntakeForms({ isActive, clientKey, clientName, phone, emai
 
   useEffect(() => {
     if (!draftReady || !clientKey || !isActive) return;
+    const signatureSnapshot = JSON.stringify({
+      signatureDataUrl: newPatient.consent.signatureDataUrl,
+      signatureInputType: newPatient.consent.signatureInputType,
+      signatureFileName: newPatient.consent.signatureFileName,
+    });
+    const signatureChanged = signatureSnapshot !== lastSignatureSnapshot.current;
+    lastSignatureSnapshot.current = signatureSnapshot;
+
     const t = window.setTimeout(() => {
       saveIntakeDraftLocal(clientKey, "new_patient", newPatient);
       // Also sync to DB so admin can see progress
@@ -235,7 +244,7 @@ export function ClientIntakeForms({ isActive, clientKey, clientName, phone, emai
       } else {
         toast.success("New patient draft saved locally");
       }
-    }, 1500); // Slightly longer debounce for DB sync
+    }, signatureChanged ? 4500 : 1500); // Longer quiet window for signature updates to avoid interrupting drawing flow
     return () => window.clearTimeout(t);
   }, [newPatient, clientKey, draftReady, isActive, isPublic]);
 
