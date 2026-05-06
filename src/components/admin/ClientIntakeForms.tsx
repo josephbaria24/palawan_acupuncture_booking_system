@@ -16,6 +16,7 @@ import { TEN_QUESTION_KEYS } from "@/lib/intake-form-definitions";
 import { clearIntakeDraftLocal, loadIntakeDraftLocal, saveIntakeDraftLocal } from "@/lib/intake-draft-storage";
 import { defaultFollowUp, defaultNewPatient, mergeFollowUp, mergeNewPatient } from "@/lib/patient-intake-defaults";
 import { useClientIntake, useSaveClientIntake } from "@/hooks/use-client-intake";
+import { usePublicIntake, useSavePublicIntake } from "@/hooks/use-public-intake";
 import type { FollowUpIntakePayload, NewPatientIntakePayload, WomenIntakeFields } from "@/types/patient-intake";
 import { cn } from "@/lib/utils";
 import { NewPatientIntakePaperForm } from "@/components/admin/new-patient-intake-paper";
@@ -26,6 +27,7 @@ type Props = {
   clientName: string;
   phone: string;
   email: string;
+  isPublic?: boolean;
 };
 
 function CheckRow({
@@ -155,9 +157,34 @@ function WomenHealthForm({
   );
 }
 
-export function ClientIntakeForms({ isActive, clientKey, clientName, phone, email }: Props) {
-  const { data: intakeData, isLoading, isFetching } = useClientIntake(clientKey, isActive);
-  const save = useSaveClientIntake();
+export function ClientIntakeForms({ isActive, clientKey, clientName, phone, email, isPublic }: Props) {
+  const adminIntake = useClientIntake(clientKey, isActive && !isPublic);
+  const publicIntake = usePublicIntake(clientKey, isActive && !!isPublic);
+  
+  const intakeData = isPublic ? publicIntake.data : adminIntake.data;
+  const isLoading = isPublic ? publicIntake.isLoading : adminIntake.isLoading;
+  const isFetching = isPublic ? publicIntake.isFetching : adminIntake.isFetching;
+
+  const adminSave = useSaveClientIntake();
+  const publicSave = useSavePublicIntake();
+  const save = isPublic ? publicSave : adminSave;
+
+  const [isCopying, setIsCopying] = useState(false);
+
+  const copyPublicLink = () => {
+    const baseUrl = `${window.location.origin}/intake/${encodeURIComponent(clientKey)}`;
+    const params = new URLSearchParams();
+    if (clientName) params.set("name", clientName);
+    if (phone) params.set("phone", phone);
+    if (email && email !== "No Email") params.set("email", email);
+    
+    const url = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
+    
+    navigator.clipboard.writeText(url);
+    setIsCopying(true);
+    toast.success("Public intake link copied to clipboard!");
+    setTimeout(() => setIsCopying(false), 2000);
+  };
 
   const [followUp, setFollowUp] = useState<FollowUpIntakePayload>(() => defaultFollowUp(clientName));
   const [newPatient, setNewPatient] = useState<NewPatientIntakePayload>(() => defaultNewPatient(clientName, phone));
@@ -202,17 +229,29 @@ export function ClientIntakeForms({ isActive, clientKey, clientName, phone, emai
     if (!draftReady || !clientKey || !isActive) return;
     const t = window.setTimeout(() => {
       saveIntakeDraftLocal(clientKey, "new_patient", newPatient);
-    }, 750);
+      // Also sync to DB so admin can see progress
+      if (isPublic) {
+        save.mutate({ clientKey, formType: "new_patient", payload: newPatient });
+      } else {
+        toast.success("New patient draft saved locally");
+      }
+    }, 1500); // Slightly longer debounce for DB sync
     return () => window.clearTimeout(t);
-  }, [newPatient, clientKey, draftReady, isActive]);
+  }, [newPatient, clientKey, draftReady, isActive, isPublic]);
 
   useEffect(() => {
     if (!draftReady || !clientKey || !isActive) return;
     const t = window.setTimeout(() => {
       saveIntakeDraftLocal(clientKey, "follow_up", followUp);
-    }, 750);
+      // Also sync to DB so admin can see progress
+      if (isPublic) {
+        save.mutate({ clientKey, formType: "follow_up", payload: followUp });
+      } else {
+        toast.success("Follow-up draft saved locally");
+      }
+    }, 1500);
     return () => window.clearTimeout(t);
-  }, [followUp, clientKey, draftReady, isActive]);
+  }, [followUp, clientKey, draftReady, isActive, isPublic]);
 
   const emailHint = useMemo(() => (email && email !== "No Email" ? email : ""), [email]);
 
@@ -246,7 +285,7 @@ export function ClientIntakeForms({ isActive, clientKey, clientName, phone, emai
   if (!isActive) return null;
 
   return (
-    <div className="rounded-3xl border border-border/40 bg-white p-4 shadow-sm sm:p-5">
+    <div className="rounded-2xl md:rounded-3xl border border-border/40 bg-white p-3 md:p-5 shadow-sm">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <div className="rounded-xl bg-primary/10 p-2 text-primary">
@@ -261,9 +300,19 @@ export function ClientIntakeForms({ isActive, clientKey, clientName, phone, emai
           </div>
         </div>
         {busy && <span className="text-[10px] font-bold text-muted-foreground">Loading…</span>}
+        {!isPublic && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 rounded-xl border-primary/20 bg-primary/5 text-[10px] font-bold text-primary hover:bg-primary/10"
+            onClick={copyPublicLink}
+          >
+            {isCopying ? "Copied!" : "Copy Public Link"}
+          </Button>
+        )}
       </div>
 
-      <Tabs defaultValue="follow_up" className="w-full">
+      <Tabs defaultValue="new_patient" className="w-full">
         <TabsList className="grid h-10 w-full grid-cols-2 rounded-xl bg-muted/40 p-1">
           <TabsTrigger value="follow_up" className="rounded-lg text-xs font-bold">
             Follow-up
@@ -281,12 +330,23 @@ export function ClientIntakeForms({ isActive, clientKey, clientName, phone, emai
               <div className="grid grid-cols-1 gap-3 p-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-bold uppercase text-[#44546A]">Date</Label>
-                  <Input
-                    type="date"
-                    className="h-9 rounded-sm border-[#4472C4]/25 text-sm"
-                    value={followUp.intakeDate}
-                    onChange={(e) => setFollowUp({ ...followUp, intakeDate: e.target.value })}
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      type="date"
+                      className="h-9 rounded-sm border-[#4472C4]/25 text-sm"
+                      value={followUp.intakeDate}
+                      onChange={(e) => setFollowUp({ ...followUp, intakeDate: e.target.value })}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-9 px-3 text-[10px] font-bold uppercase tracking-wider border-[#4472C4]/25 text-[#4472C4] hover:bg-[#4472C4]/5"
+                      onClick={() => setFollowUp({ ...followUp, intakeDate: new Date().toISOString().split('T')[0] })}
+                    >
+                      Today
+                    </Button>
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-[10px] font-bold uppercase text-[#44546A]">Patient name</Label>
@@ -494,7 +554,7 @@ export function ClientIntakeForms({ isActive, clientKey, clientName, phone, emai
                   disabled={save.isPending}
                 >
                   <Save size={14} className="mr-2" />
-                  Save follow-up
+                  {isPublic ? "Save follow-up progress" : "Save follow-up"}
                 </Button>
               </div>
             </div>
@@ -508,6 +568,7 @@ export function ClientIntakeForms({ isActive, clientKey, clientName, phone, emai
             toggleMap={toggleMap}
             onSave={saveNew}
             saving={save.isPending}
+            isPublic={isPublic}
           />
         </TabsContent>
       </Tabs>

@@ -58,9 +58,9 @@ function PaperFormSection({
 }) {
   const t = PAPER[tone];
   return (
-    <section className={cn("overflow-hidden border-2 shadow-sm", t.ring)}>
-      <div className={cn("px-2 py-2 text-center text-[11px] font-black uppercase leading-tight tracking-wide", t.head)}>{title}</div>
-      <div className={cn("border-t-2 p-3 text-[12px] leading-snug text-neutral-900", t.ring, t.body, bodyClassName)}>{children}</div>
+    <section className={cn("overflow-hidden border md:border-2 shadow-sm", t.ring)}>
+      <div className={cn("px-2 py-1.5 md:py-2 text-center text-[10px] md:text-[11px] font-black uppercase leading-tight tracking-wide", t.head)}>{title}</div>
+      <div className={cn("border-t md:border-t-2 p-2 md:p-3 text-[12px] leading-snug text-neutral-900", t.ring, t.body, bodyClassName)}>{children}</div>
     </section>
   );
 }
@@ -194,32 +194,44 @@ export function NewPatientIntakePaperForm({
   toggleMap,
   onSave,
   saving,
+  isPublic,
 }: {
   newPatient: NewPatientIntakePayload;
   setNewPatient: React.Dispatch<React.SetStateAction<NewPatientIntakePayload>>;
   toggleMap: (section: "familyHistory" | "pastMedical" | "safetyFlags" | "organSystems", key: string, v: boolean) => void;
   onSave: () => void;
   saving: boolean;
+  isPublic?: boolean;
 }) {
   return (
-    <div className="border-[3px] border-[#0c2340] bg-white shadow-md">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-[#0c2340] bg-[#0f2942] px-3 py-2.5 text-white">
-        <span className="text-[12px] font-black uppercase tracking-wide">New patient intake form</span>
-        <div className="flex items-center gap-2 text-[11px] font-semibold">
+    <div className="border-2 md:border-[3px] border-[#0c2340] bg-white shadow-md">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-[#0c2340] bg-[#0f2942] px-3 py-2 text-white">
+        <span className="text-[10px] md:text-[12px] font-black uppercase tracking-wide">New patient intake form</span>
+        <div className="flex items-center gap-1.5 md:gap-2 text-[10px] font-semibold">
           <span>Date:</span>
-          <Input
-            type="date"
-            value={newPatient.intakeDate}
-            onChange={(e) => setNewPatient({ ...newPatient, intakeDate: e.target.value })}
-            className="h-8 w-[150px] rounded border border-white/40 bg-white/95 text-neutral-900"
-          />
+          <div className="flex items-center gap-1">
+            <Input
+              type="date"
+              value={newPatient.intakeDate}
+              onChange={(e) => setNewPatient({ ...newPatient, intakeDate: e.target.value })}
+              className="h-7 md:h-8 w-[115px] md:w-[140px] rounded border border-white/40 bg-white/95 text-neutral-900 px-2 py-0"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              className="h-7 md:h-8 px-2 text-[9px] uppercase font-bold border-white/40 bg-white/10 hover:bg-white/20 text-white"
+              onClick={() => setNewPatient(prev => ({ ...prev, intakeDate: new Date().toISOString().split('T')[0] }))}
+            >
+              Today
+            </Button>
+          </div>
         </div>
       </div>
       {/* <div className="flex justify-center border-b-2 border-[#0c2340] bg-[#f0f4fa] px-2 py-2">
         <img src="/images/new-patient-intake-header.jpeg" alt="" className="max-h-20 w-auto max-w-full object-contain" />
       </div> */}
 
-      <div className="space-y-4 p-3 sm:p-4">
+      <div className="space-y-3 md:space-y-4 p-2 md:p-4">
         <PaperFormSection tone="navy" title="Personal information">
           <div className="grid gap-3 md:grid-cols-12">
             <div className="md:col-span-7">
@@ -360,7 +372,7 @@ export function NewPatientIntakePaperForm({
           <div className="border-t-2 border-neutral-900 bg-white px-3 py-2 text-center text-[12px] font-black uppercase tracking-wide text-neutral-900">
             Informed consent for acupuncture treatment
           </div>
-          <div className="max-h-[min(52vh,480px)] overflow-y-auto border-t border-neutral-900 px-3 py-2 text-justify text-[11px] leading-relaxed text-neutral-900" dangerouslySetInnerHTML={{ __html: INFORMED_CONSENT_ACUPUNCTURE_HTML }} />
+          <div className={cn("max-h-[min(52vh,480px)] overflow-y-auto border-t md:border-t-2 border-neutral-900 px-2 md:px-3 py-2 text-justify text-[10px] md:text-[11px] leading-relaxed text-neutral-900", isPublic && "max-h-[300px]")} dangerouslySetInnerHTML={{ __html: INFORMED_CONSENT_ACUPUNCTURE_HTML }} />
           <div className="my-2 border-t-2 border-dashed border-neutral-700" />
           <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wide text-neutral-900">{CONSENT_STATEMENT_INTRO}</p>
           <div className="grid grid-cols-2 gap-1 px-3 pb-3 sm:grid-cols-3 md:grid-cols-5">
@@ -518,7 +530,7 @@ export function NewPatientIntakePaperForm({
         <div className="flex justify-end border-t-2 border-[#0c2340] pt-4">
           <Button type="button" size="sm" className="h-10 rounded-sm bg-[#0f2942] px-6 font-bold hover:bg-[#0a1f33]" onClick={onSave} disabled={saving}>
             <Save size={16} className="mr-2" />
-            Save new patient intake
+            {isPublic ? "Save patient intake progress" : "Save new patient intake"}
           </Button>
         </div>
       </div>
