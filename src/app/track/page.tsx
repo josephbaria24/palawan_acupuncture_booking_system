@@ -48,7 +48,7 @@ export default function TrackPage() {
             <form onSubmit={handleSearch} className="mt-6 md:mt-10 relative">
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 md:pl-5 flex items-center pointer-events-none">
-                  <ShieldCheck className="text-muted-foreground/50 group-focus-within:text-primary transition-colors" size={20} className="md:size-6" />
+                  <ShieldCheck className="text-muted-foreground/50 group-focus-within:text-primary transition-colors md:size-6" size={20} />
                 </div>
                 <Input
                   type="text"
