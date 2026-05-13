@@ -1,6 +1,6 @@
 "use client";
 
-import { useSchedules, useCreateBooking, useAllBookings } from "@/hooks/use-acupuncture";
+import { useSchedules, useCreateBooking, useAllBookings, useClientDirectory } from "@/hooks/use-acupuncture";
 import { 
   UserPlus, 
   Calendar, 
@@ -33,6 +33,7 @@ export default function AdminAssignClient() {
   const preselectedScheduleId = searchParams.get("scheduleId")?.trim() ?? "";
   const { data: schedules, isLoading: isSchedulesLoading } = useSchedules();
   const { data: allBookings } = useAllBookings();
+  const { data: directoryRows = [] } = useClientDirectory();
   const createBooking = useCreateBooking();
   
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -47,21 +48,34 @@ export default function AdminAssignClient() {
   const [slotSearch, setSlotSearch] = useState("");
 
   const uniqueClients = useMemo(() => {
-    if (!allBookings) return [];
-    const clientsMap = new Map();
-    allBookings.forEach(b => {
+    const clientsMap = new Map<string, { name: string; phone: string; email: string }>();
+
+    (allBookings || []).forEach((b) => {
       const email = b.email ? b.email.toLowerCase().trim() : "";
       const key = email || `${b.client_name.toLowerCase().trim()}-${b.phone.trim()}`;
       if (!clientsMap.has(key)) {
         clientsMap.set(key, {
           name: b.client_name,
           phone: b.phone,
-          email: b.email || ""
+          email: b.email || "",
         });
       }
     });
+
+    directoryRows.forEach((d) => {
+      const email = d.email && d.email !== "No Email" ? d.email.toLowerCase().trim() : "";
+      const key = email || `${d.client_name.toLowerCase().trim()}-${d.phone.trim()}`;
+      if (!clientsMap.has(key)) {
+        clientsMap.set(key, {
+          name: d.client_name,
+          phone: d.phone,
+          email: d.email === "No Email" ? "" : d.email || "",
+        });
+      }
+    });
+
     return Array.from(clientsMap.values());
-  }, [allBookings]);
+  }, [allBookings, directoryRows]);
 
   const suggestions = useMemo(() => {
     if (!formData.client_name || !showSuggestions) return [];
@@ -107,7 +121,7 @@ export default function AdminAssignClient() {
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
       <div>
-        <h1 className="text-3xl font-display font-bold text-foreground">Manual Client Assignment</h1>
+        <h1 className="text-3xl font-display font-bold text-foreground">Manual Patients Assignment</h1>
         <p className="text-muted-foreground mt-1">Book a treatment session on behalf of a patient.</p>
       </div>
 

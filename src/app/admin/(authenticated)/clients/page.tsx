@@ -1,39 +1,80 @@
 "use client";
 
-import { useAllBookings } from "@/hooks/use-acupuncture";
+import { useAllBookings, useClientDirectory, useDeleteBookingsBulk, useDeleteClientDirectory, useImportClientDirectory } from "@/hooks/use-acupuncture";
 import { format } from "date-fns";
 import { 
   Users, 
   Search, 
   Mail, 
   Phone, 
-  ChevronRight, 
   ChevronDown, 
   Calendar as CalendarIcon, 
   Clock, 
-  MapPin, 
   History,
   CheckCircle2,
   Clock3,
   XCircle,
   UserX,
   Trash2,
-  ExternalLink
+  ExternalLink,
+  Upload,
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatTime12h } from "@/utils/time";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { ClientIntakeForms } from "@/components/admin/ClientIntakeForms";
+import { PatientImportDialog } from "@/components/admin/patient-import-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { toast } from "@/lib/toast";
+
+function bookingContactKey(emailRaw: string, name: string, phone: string, bookingId: string): string {
+  const email = emailRaw ? emailRaw.toLowerCase().trim() : "";
+  const n = (name || "").trim();
+  const p = (phone || "").trim();
+  return email || (n && p ? `${n.toLowerCase()}-${p}` : `booking:${bookingId}`);
+}
+
+type UnifiedClient = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  bookings: any[];
+  fromDirectory?: boolean;
+  directoryCreatedAt?: string;
+};
 
 export default function AdminClients() {
+  const HOLD_TO_DELETE_MS = 1200;
   const { data: bookings, isLoading } = useAllBookings();
+  const { data: directoryRows = [], isLoading: directoryLoading } = useClientDirectory();
+  const importDirectory = useImportClientDirectory();
+  const deleteDirectory = useDeleteClientDirectory();
+  const deleteBookingsBulk = useDeleteBookingsBulk();
   const [searchQuery, setSearchQuery] = useState("");
   const [expandedClientId, setExpandedClientId] = useState<string | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [selectedForDelete, setSelectedForDelete] = useState<Record<string, boolean>>({});
+  const [holdProgress, setHoldProgress] = useState(0);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
+  const holdIntervalRef = useRef<number | null>(null);
+  const holdTimeoutRef = useRef<number | null>(null);
 
   const clients = useMemo(() => {
     if (!bookings) return [];
@@ -42,8 +83,7 @@ export default function AdminClients() {
       const email = booking.email ? booking.email.toLowerCase().trim() : "";
       const name = (booking.client_name || "").trim();
       const phone = (booking.phone || "").trim();
-      const contactKey =
-        email || (name && phone ? `${name.toLowerCase()}-${phone}` : `booking:${booking.id}`);
+      const contactKey = bookingContactKey(booking.email || "", name, phone, booking.id);
 
       if (!acc[contactKey]) {
         acc[contactKey] = {
@@ -58,8 +98,29 @@ export default function AdminClients() {
       return acc;
     }, {} as Record<string, any>);
 
-    return Object.values(grouped).sort((a, b) => a.name.localeCompare(b.name));
-  }, [bookings]);
+    const fromBookings = Object.values(grouped) as UnifiedClient[];
+
+    const seenKeys = new Set(fromBookings.map((c) => c.id));
+    const merged: UnifiedClient[] = [...fromBookings];
+
+    for (const d of directoryRows) {
+      const emailForKey = d.email && d.email !== "No Email" ? d.email : "";
+      const ck = bookingContactKey(emailForKey, d.client_name, d.phone, d.id);
+      if (seenKeys.has(ck)) continue;
+      seenKeys.add(ck);
+      merged.push({
+        id: d.id,
+        name: d.client_name || "Unknown",
+        email: d.email || "No Email",
+        phone: d.phone || "",
+        bookings: [],
+        fromDirectory: true,
+        directoryCreatedAt: d.created_at,
+      } satisfies UnifiedClient);
+    }
+
+    return merged.sort((a, b) => a.name.localeCompare(b.name));
+  }, [bookings, directoryRows]);
 
   const filteredClients = useMemo(() => {
     const q = searchQuery.toLowerCase();
@@ -69,6 +130,83 @@ export default function AdminClients() {
       c.phone.includes(q)
     );
   }, [clients, searchQuery]);
+
+  const selectedIds = useMemo(
+    () => Object.keys(selectedForDelete).filter((id) => selectedForDelete[id]),
+    [selectedForDelete],
+  );
+
+  const clearHoldTimers = () => {
+    if (holdIntervalRef.current) {
+      window.clearInterval(holdIntervalRef.current);
+      holdIntervalRef.current = null;
+    }
+    if (holdTimeoutRef.current) {
+      window.clearTimeout(holdTimeoutRef.current);
+      holdTimeoutRef.current = null;
+    }
+  };
+
+  const handleDeleteSelected = async (idsToDelete: string[]) => {
+    try {
+      const targets = clients.filter((c) => idsToDelete.includes(c.id));
+      const directoryIds = targets.filter((c) => c.fromDirectory).map((c) => c.id);
+      const bookingIds = Array.from(
+        new Set(targets.flatMap((c) => c.bookings.map((b: any) => String(b.id))).filter(Boolean)),
+      );
+
+      let deletedPatients = 0;
+      if (directoryIds.length > 0) {
+        await deleteDirectory.mutateAsync(directoryIds);
+      }
+      if (bookingIds.length > 0) {
+        await deleteBookingsBulk.mutateAsync(bookingIds);
+      }
+      deletedPatients = targets.length;
+      toast.success(`Deleted ${deletedPatients} patient record${deletedPatients > 1 ? "s" : ""}`);
+      setSelectedForDelete((prev) => {
+        const next = { ...prev };
+        idsToDelete.forEach((id) => delete next[id]);
+        return next;
+      });
+      if (expandedClientId && idsToDelete.includes(expandedClientId)) setExpandedClientId(null);
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : "Delete failed");
+    } finally {
+      setPendingDeleteIds([]);
+      setConfirmDeleteOpen(false);
+      setHoldProgress(0);
+    }
+  };
+
+  const deletingNow = deleteDirectory.isPending || deleteBookingsBulk.isPending;
+
+  const startHoldDelete = () => {
+    if (selectedIds.length === 0 || deletingNow) return;
+    clearHoldTimers();
+    const start = Date.now();
+    setHoldProgress(0);
+
+    holdIntervalRef.current = window.setInterval(() => {
+      const elapsed = Date.now() - start;
+      const pct = Math.min(100, (elapsed / HOLD_TO_DELETE_MS) * 100);
+      setHoldProgress(pct);
+    }, 16);
+
+    holdTimeoutRef.current = window.setTimeout(() => {
+      clearHoldTimers();
+      setHoldProgress(100);
+      setPendingDeleteIds(selectedIds);
+      setConfirmDeleteOpen(true);
+      setHoldProgress(0);
+    }, HOLD_TO_DELETE_MS);
+  };
+
+  const stopHoldDelete = () => {
+    if (deletingNow) return;
+    clearHoldTimers();
+    setHoldProgress(0);
+  };
 
   if (isLoading) {
     return (
@@ -87,36 +225,124 @@ export default function AdminClients() {
       )}
     >
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-xl text-primary">
               <Users size={28} />
             </div>
-            Clients
+            Patients
           </h1>
-          <p className="text-muted-foreground mt-1 text-sm font-medium">View and manage your patient database.</p>
+          <p className="text-muted-foreground mt-1 text-sm font-medium">
+            View and manage your patient database. Import paper lists with{" "}
+            <span className="font-semibold text-foreground/80">Import patients</span>.
+          </p>
         </div>
-        
-        <div className="relative w-full md:w-80 shadow-sm rounded-2xl overflow-hidden bg-white border border-border/40">
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-            <Search size={18} className="text-muted-foreground/60" />
+
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center md:w-auto md:max-w-xl">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-12 shrink-0 rounded-2xl border-primary/25 bg-primary/5 px-4 text-sm font-bold text-primary hover:bg-primary/10"
+            onClick={() => setImportOpen(true)}
+            disabled={directoryLoading}
+          >
+            <Upload size={18} className="mr-2" />
+            Import patients
+          </Button>
+          <div className="relative min-w-0 flex-1 shadow-sm rounded-2xl overflow-hidden bg-white border border-border/40">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+              <Search size={18} className="text-muted-foreground/60" />
+            </div>
+            <Input
+              type="text"
+              placeholder="Search patients..."
+              className="w-full border-none bg-transparent py-6 pl-11 pr-4 text-sm font-medium focus-visible:ring-0 rounded-none shadow-none"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-          <Input
-            type="text"
-            placeholder="Search patients..."
-            className="w-full border-none bg-transparent py-6 pl-11 pr-4 text-sm font-medium focus-visible:ring-0 rounded-none shadow-none"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
         </div>
       </div>
+
+      <PatientImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        isPending={importDirectory.isPending}
+        onImport={async (patients) => {
+          try {
+            const res = await importDirectory.mutateAsync(patients);
+            toast.success(`Imported ${res.inserted} patient${res.inserted === 1 ? "" : "s"}`);
+            setImportOpen(false);
+          } catch (e: unknown) {
+            toast.error(e instanceof Error ? e.message : "Import failed");
+          }
+        }}
+      />
+
+      {selectedIds.length > 0 && (
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-border/50 bg-white px-3 py-2.5">
+        <p className="text-xs font-medium text-muted-foreground">
+          Select patients, then delete in bulk.
+        </p>
+        <Button
+          type="button"
+          variant="destructive"
+          className="relative h-8 overflow-hidden rounded-xl px-3 text-xs font-bold"
+          disabled={selectedIds.length === 0 || deletingNow}
+          onPointerDown={startHoldDelete}
+          onPointerUp={stopHoldDelete}
+          onPointerLeave={stopHoldDelete}
+          onPointerCancel={stopHoldDelete}
+        >
+          <span
+            className="absolute inset-y-0 left-0 bg-black/20 transition-none"
+            style={{ width: `${holdProgress}%` }}
+            aria-hidden
+          />
+          <span className="relative z-10 inline-flex items-center">
+          <Trash2 size={14} className="mr-1.5" />
+          {deletingNow
+            ? "Deleting..."
+            : holdProgress > 0
+              ? `Hold... ${Math.floor(holdProgress)}%`
+              : `Hold to Delete (${selectedIds.length})`}
+          </span>
+        </Button>
+      </div>
+      )}
+
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete selected patient records?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You are about to permanently delete {pendingDeleteIds.length} patient record
+              {pendingDeleteIds.length === 1 ? "" : "s"}. This includes linked booking records for selected patients.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deletingNow}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => {
+                e.preventDefault();
+                void handleDeleteSelected(pendingDeleteIds);
+              }}
+              disabled={deletingNow || pendingDeleteIds.length === 0}
+            >
+              {deletingNow ? "Deleting..." : "Yes, Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Client List */}
       <div
         className={cn(
           "grid min-h-0 grid-cols-1 gap-4",
-          expandedClientId && "flex-1",
+          expandedClientId ? "flex-1" : "max-h-[68vh] overflow-y-auto pr-1 md:max-h-[74vh]",
         )}
       >
         {filteredClients.length === 0 ? (
@@ -143,6 +369,21 @@ export default function AdminClients() {
                 onClick={() => setExpandedClientId(expandedClientId === client.id ? null : client.id)}
                 className="flex w-full shrink-0 items-center gap-4 p-5 text-left focus:outline-none md:p-6"
               >
+                <div
+                  className="shrink-0"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Checkbox
+                    checked={!!selectedForDelete[client.id]}
+                    onCheckedChange={(v) =>
+                      setSelectedForDelete((prev) => ({
+                        ...prev,
+                        [client.id]: v === true,
+                      }))
+                    }
+                    aria-label={`Select ${client.name} for delete`}
+                  />
+                </div>
                 <div className="w-12 h-12 rounded-2xl bg-secondary/50 flex items-center justify-center text-primary font-bold text-lg border border-secondary shadow-sm shrink-0">
                   {client.name.charAt(0)}
                 </div>
@@ -196,18 +437,36 @@ export default function AdminClients() {
                             <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground/70">Quick Statistics</h4>
                           </div>
                           <div className="space-y-3">
-                            <div className="flex justify-between items-center text-sm">
-                              <span className="text-muted-foreground font-medium">Account Created</span>
-                              <span className="text-foreground font-bold">{format(new Date(client.bookings[client.bookings.length - 1].created_at), 'MMMM dd, yyyy')}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                              <span className="text-muted-foreground font-medium">Total Appointments</span>
-                              <span className="text-foreground font-bold">{client.bookings.length}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-sm">
-                              <span className="text-muted-foreground font-medium">Last Visit</span>
-                              <span className="text-foreground font-bold">{format(new Date(client.bookings[0].created_at), 'MMM dd, yyyy')}</span>
-                            </div>
+                            {(() => {
+                              const sorted = [...client.bookings].sort(
+                                (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+                              );
+                              const directoryCreated = client.directoryCreatedAt;
+                              const accountDate =
+                                sorted[0]?.created_at ?? directoryCreated ?? null;
+                              const lastVisit =
+                                sorted.length > 0 ? sorted[sorted.length - 1].created_at : null;
+                              return (
+                                <>
+                                  <div className="flex justify-between items-center text-sm">
+                                    <span className="text-muted-foreground font-medium">Account Created</span>
+                                    <span className="text-foreground font-bold">
+                                      {accountDate ? format(new Date(accountDate), "MMMM dd, yyyy") : "—"}
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between items-center text-sm">
+                                    <span className="text-muted-foreground font-medium">Total Appointments</span>
+                                    <span className="text-foreground font-bold">{client.bookings.length}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center text-sm">
+                                    <span className="text-muted-foreground font-medium">Last Visit</span>
+                                    <span className="text-foreground font-bold">
+                                      {lastVisit ? format(new Date(lastVisit), "MMM dd, yyyy") : "—"}
+                                    </span>
+                                  </div>
+                                </>
+                              );
+                            })()}
                           </div>
                         </div>
 

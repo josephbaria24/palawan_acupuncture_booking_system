@@ -33,8 +33,8 @@ export function AdminLayout({ children }: { children: ReactNode }) {
   const navItems = [
     { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
     { href: "/admin/schedules", label: "Schedules", icon: CalendarDays },
-    { href: "/admin/clients", label: "View Clients", icon: Users },
-    { href: "/admin/assign", label: "Assign Client", icon: UserPlus },
+    { href: "/admin/clients", label: "View Patients", icon: Users },
+    { href: "/admin/assign", label: "Assign Patients", icon: UserPlus },
   ];
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);

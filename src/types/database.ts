@@ -39,3 +39,13 @@ export interface Booking {
 export interface ScheduleWithBookings extends Schedule {
   bookings?: { id: string; status: BookingStatus }[];
 }
+
+/** Standalone patient row (e.g. imported from paper), not tied to a booking */
+export interface ClientDirectoryPatient {
+  id: string;
+  created_at: string;
+  client_name: string;
+  phone: string;
+  email: string;
+  notes: string;
+}

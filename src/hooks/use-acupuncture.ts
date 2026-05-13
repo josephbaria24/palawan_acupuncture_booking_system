@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "../lib/supabase";
-import { Schedule, ScheduleWithBookings, Booking, BookingStatus } from "../types/database";
+import { Schedule, ScheduleWithBookings, Booking, BookingStatus, ClientDirectoryPatient } from "../types/database";
 
 // --- Schedules Hooks ---
 export function useSchedules() {
@@ -288,6 +288,102 @@ export function useAllBookings() {
 
       return response.json() as Promise<(Booking & { schedules: Schedule })[]>;
     }
+  });
+}
+
+export function useClientDirectory() {
+  return useQuery({
+    queryKey: ["client-directory"],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch("/api/admin/client-directory", {
+        headers: {
+          Authorization: session ? `Bearer ${session.access_token}` : "",
+        },
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || "Failed to load imported patients");
+      }
+      return response.json() as Promise<ClientDirectoryPatient[]>;
+    },
+  });
+}
+
+export function useImportClientDirectory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (patients: { name: string; phone: string; email?: string; notes?: string }[]) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch("/api/admin/client-directory", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: session ? `Bearer ${session.access_token}` : "",
+        },
+        body: JSON.stringify({ patients }),
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || "Import failed");
+      }
+      return response.json() as Promise<{ ok: boolean; inserted: number }>;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["client-directory"] });
+    },
+  });
+}
+
+export function useDeleteClientDirectory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch("/api/admin/client-directory", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: session ? `Bearer ${session.access_token}` : "",
+        },
+        body: JSON.stringify({ ids }),
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || "Delete failed");
+      }
+      return response.json() as Promise<{ ok: boolean; deleted: number }>;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["client-directory"] });
+    },
+  });
+}
+
+export function useDeleteBookingsBulk() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch("/api/admin/bookings", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: session ? `Bearer ${session.access_token}` : "",
+        },
+        body: JSON.stringify({ ids }),
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || "Delete failed");
+      }
+      return response.json() as Promise<{ ok: boolean; deleted: number }>;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookings", "all"] });
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["schedules"] });
+    },
   });
 }
 

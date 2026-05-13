@@ -75,3 +75,60 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message || "Failed to fetch admin data." }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return NextResponse.json({ error: "No authorization token provided" }, { status: 401 });
+    }
+
+    const patientSupabase = createClient(supabaseUrl, supabaseAnonKey, {
+      db: { schema: "acupuncture_system" },
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const { data: { user }, error: authError } = await patientSupabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized access. Session might have expired." }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const ids = body.ids as string[] | undefined;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return NextResponse.json({ error: "ids array is required" }, { status: 400 });
+    }
+    if (ids.length > 1000) {
+      return NextResponse.json({ error: "Maximum 1000 booking ids per request" }, { status: 400 });
+    }
+    const uniqueIds = Array.from(new Set(ids.map((v) => String(v || "").trim()).filter(Boolean)));
+    if (uniqueIds.length === 0) {
+      return NextResponse.json({ error: "No valid ids provided" }, { status: 400 });
+    }
+
+    const { error, count } = await patientSupabase
+      .from("bookings")
+      .delete({ count: "exact" })
+      .in("id", uniqueIds);
+
+    if (error) throw error;
+
+    try {
+      await patientSupabase.from("audit_logs").insert([{
+        actor_id: user.id,
+        actor_email: user.email,
+        action: "DELETE_BOOKINGS_BULK",
+        resource_id: "bulk",
+        resource_type: "bookings",
+        metadata: { count: count ?? uniqueIds.length, ids: uniqueIds },
+      }]);
+    } catch (auditErr) {
+      console.error("Failed to write audit log:", auditErr);
+    }
+
+    return NextResponse.json({ ok: true, deleted: count ?? uniqueIds.length });
+  } catch (error: any) {
+    console.error("Admin bookings delete failed:", error);
+    return NextResponse.json({ error: error.message || "Failed to delete bookings." }, { status: 500 });
+  }
+}
