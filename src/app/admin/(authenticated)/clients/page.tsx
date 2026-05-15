@@ -364,10 +364,18 @@ export default function AdminClients() {
                   : "hover:shadow-lg hover:shadow-black/5",
               )}
             >
-              {/* Client Summary Row */}
-              <button 
+              {/* Client Summary Row — div, not button, so the Radix checkbox is not nested inside a button */}
+              <motion.div
+                role="button"
+                tabIndex={0}
                 onClick={() => setExpandedClientId(expandedClientId === client.id ? null : client.id)}
-                className="flex w-full shrink-0 items-center gap-4 p-5 text-left focus:outline-none md:p-6"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setExpandedClientId(expandedClientId === client.id ? null : client.id);
+                  }
+                }}
+                className="flex w-full shrink-0 cursor-pointer items-center gap-4 p-5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:p-6"
               >
                 <div
                   className="shrink-0"
@@ -414,7 +422,7 @@ export default function AdminClients() {
                     <ChevronDown size={18} />
                   </div>
                 </div>
-              </button>
+              </motion.div>
 
               {/* Expanded Profile & History */}
               <AnimatePresence>

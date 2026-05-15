@@ -313,7 +313,7 @@ export function useClientDirectory() {
 export function useImportClientDirectory() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (patients: { name: string; phone: string; email?: string; notes?: string }[]) => {
+    mutationFn: async (patients: { name: string; phone?: string; email?: string; notes?: string }[]) => {
       const { data: { session } } = await supabase.auth.getSession();
       const response = await fetch("/api/admin/client-directory", {
         method: "POST",

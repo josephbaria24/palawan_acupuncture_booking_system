@@ -18,7 +18,7 @@ import { toast } from "@/lib/toast";
 
 export type PatientImportRowPayload = {
   name: string;
-  phone: string;
+  phone?: string;
   email?: string;
   notes?: string;
 };
@@ -81,10 +81,10 @@ export function PatientImportDialog({
       const phone = r.phone.trim();
       const email = r.email.trim();
       const notes = r.notes.trim();
-      if (!name || !phone) continue;
+      if (!name) continue;
       out.push({
         name,
-        phone,
+        ...(phone ? { phone } : {}),
         ...(email ? { email } : {}),
         ...(notes ? { notes } : {}),
       });
@@ -95,7 +95,7 @@ export function PatientImportDialog({
   const handleImport = async () => {
     const payload = buildPayload();
     if (payload.length === 0) {
-      toast.error("No rows to import", "Enter at least one full name and phone.");
+      toast.error("No rows to import", "Enter at least one full name.");
       return;
     }
     await onImport(payload);
@@ -146,7 +146,7 @@ export function PatientImportDialog({
     focusCell(nextRow, colIndex);
   };
 
-  const hasAnyFilled = rows.some((r) => r.name.trim() && r.phone.trim());
+  const hasAnyFilled = rows.some((r) => r.name.trim());
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -155,8 +155,8 @@ export function PatientImportDialog({
           <DialogTitle>Import patients</DialogTitle>
           <DialogDescription className="text-left text-sm leading-relaxed">
             Click a cell and type like Excel. <strong>Tab</strong> moves across columns; <strong>Enter</strong> moves
-            down. You can also <strong>paste</strong> a block copied from a spreadsheet (tab/newline separated). Name and
-            phone are required to import a row.
+            down. You can also <strong>paste</strong> a block copied from a spreadsheet (tab/newline separated). Only
+            name is required to import a row.
           </DialogDescription>
         </DialogHeader>
 
@@ -182,7 +182,7 @@ export function PatientImportDialog({
                     Name <span className="text-destructive">*</span>
                   </th>
                   <th className="min-w-[120px] border-b border-r border-border/60 px-2 py-2 text-left text-[10px] font-black uppercase tracking-wider text-muted-foreground">
-                    Phone <span className="text-destructive">*</span>
+                    Phone
                   </th>
                   <th className="min-w-[160px] border-b border-r border-border/60 px-2 py-2 text-left text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                     Email
@@ -216,7 +216,9 @@ export function PatientImportDialog({
                             "h-9 min-h-9 w-full min-w-0 rounded-none border-0 bg-transparent px-2 py-1 text-sm shadow-none",
                             "focus-visible:z-[1] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
                           )}
-                          placeholder={field === "name" ? "Full name" : field === "phone" ? "Number" : field === "email" ? "Optional" : ""}
+                          placeholder={
+                            field === "name" ? "Full name" : field === "phone" || field === "email" ? "Optional" : ""
+                          }
                           autoComplete="off"
                         />
                       </td>
@@ -240,7 +242,7 @@ export function PatientImportDialog({
           </div>
 
           <p className="text-xs text-muted-foreground">
-            Rows with empty name or phone are skipped. Imported patients show in the list without a booking; expand a row for intake
+            Rows with an empty name are skipped. Imported patients show in the list without a booking; expand a row for intake
             forms.
           </p>
         </div>

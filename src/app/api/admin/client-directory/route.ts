@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const patients = body.patients as Array<{ name: string; phone: string; email?: string; notes?: string }> | undefined;
+    const patients = body.patients as Array<{ name: string; phone?: string; email?: string; notes?: string }> | undefined;
     if (!Array.isArray(patients) || patients.length === 0) {
       return NextResponse.json({ error: "patients array is required" }, { status: 400 });
     }
@@ -95,8 +95,8 @@ export async function POST(req: NextRequest) {
       const phone = (p.phone || "").trim();
       const email = (p.email || "").trim() || "No Email";
       const notes = (p.notes || "").trim();
-      if (!name || !phone) {
-        throw new Error("Each row needs at least name and phone");
+      if (!name) {
+        throw new Error("Each row needs at least a name");
       }
       return {
         client_name: encrypt(name),
